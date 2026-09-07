@@ -1,6 +1,8 @@
 import pool from "../../config/db.js";
 import { hashPassword } from "../../utils/password.js";
 
+const publicUserColumns = "id, name, email, role";
+
 export const createUserAdmin = async (name, email, password) => {
     const hashedPassword = await hashPassword(password);
     const query = `
@@ -32,12 +34,12 @@ export const createUser = async (name, email, password) => {
     return result.rows[0];
 }
 export const getAllUsers = async () => {
-    const result = await pool.query("SELECT * FROM users");
+    const result = await pool.query(`SELECT ${publicUserColumns} FROM users`);
     return result.rows;
 }
 export const getUserAdmin = async (email) => {
     const query = `
-        SELECT * 
+        SELECT ${publicUserColumns}
         FROM users 
         WHERE LOWER(email) = LOWER($1)
         AND role = 1
@@ -47,7 +49,7 @@ export const getUserAdmin = async (email) => {
 }
 export const getUser = async (email) => {
     const query = `
-        SELECT * 
+        SELECT ${publicUserColumns}
         FROM users 
         WHERE LOWER(email) = LOWER($1)
         AND role = 4
