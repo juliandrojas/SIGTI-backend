@@ -1,3 +1,4 @@
+import pool from "../../config/db.js";
 import { hashPassword } from "../../utils/password.js";
 
 export const createUserAdmin = async (name, email, password) => {

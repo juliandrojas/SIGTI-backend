@@ -9,7 +9,7 @@ app.use(express.json());
 // Routes
 app.use("/",indexRoutes);
 app.use("/roles", roleRoutes);
-app.use("/user", userRoutes);
+app.use("/users", userRoutes);
 app.listen(process.env.PORT, () => {
     console.log('Server is running on port ' + process.env.PORT);
 });
