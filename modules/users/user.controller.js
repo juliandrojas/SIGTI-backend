@@ -24,7 +24,8 @@ export const createUserController = async (req, res) => {
 }
 export const getUserAdminController = async (req, res) => {
     try {
-        const userAdmin = await getUserAdminService();
+        const { email } = req.body;
+        const userAdmin = await getUserAdminService(email);
         res.status(200).json(userAdmin);
     } catch (error) {
         res.status(500).json({
@@ -34,7 +35,8 @@ export const getUserAdminController = async (req, res) => {
 }
 export const getUserController = async (req, res) => {
     try {
-        const user = await getUserService();
+        const { email } = req.body;
+        const user = await getUserService(email);
         res.status(200).json(user);
     } catch (error) {
         res.status(500).json({
