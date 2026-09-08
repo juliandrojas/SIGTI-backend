@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from 'dotenv';
 import express from 'express';
+import { authenticateToken } from "./middleware/auth.middleware.js";
 import indexRoutes from './modules/index/index.routes.js';
 import roleRoutes from "./modules/roles/role.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
@@ -10,7 +11,7 @@ app.use(express.json());
 app.use(cors());
 // Routes
 app.use("/",indexRoutes);
-app.use("/roles", roleRoutes);
+app.use("/roles", authenticateToken, roleRoutes);
 app.use("/users", userRoutes);
 app.listen(process.env.PORT, () => {
     console.log('Server is running on port ' + process.env.PORT);

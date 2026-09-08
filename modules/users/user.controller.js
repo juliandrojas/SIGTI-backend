@@ -1,3 +1,4 @@
+import { generateToken } from "../../utils/jwt.js";
 import {
     createUserService,
     findUserForLoginService,
@@ -55,8 +56,12 @@ export const findUserForLoginController = async (req, res) => {
       });
     }
     const { password: _, ...userWithoutPassword } = user;
+    const token = generateToken(user);
 
-    return res.status(200).json(userWithoutPassword);
+    return res.status(200).json({
+      token,
+      user: userWithoutPassword,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error.message,
