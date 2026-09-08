@@ -40,7 +40,7 @@ export const getUsernameController = async (req, res) => {
   }
 };
 
-export const loginUserController = async (req, res) => {
+export const findUserForLoginController = async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {

@@ -67,6 +67,12 @@ export const getUsername = async (username) => {
     return result.rows[0];
 };
 
+export const findUserForLogin = async (username) =>{
+    const query = "SELECT id, name, username, email, password, role_id FROM users WHERE LOWER(username) = LOWER($1)";
+    const result = await pool.query(query, [username]);
+    const user = result.rows[0];
+}
+
 export const saveResetToken = async (email, tokenHash, expiresAt) => {
   const query = `
     UPDATE users
@@ -84,12 +90,3 @@ export const saveResetToken = async (email, tokenHash, expiresAt) => {
 
   return result.rows[0];
 };
-export const findUserForLogin = async (username) =>{
-    const query = `
-    SELECT id, name, username, email, password, role_id
-    FROM users
-    WHERE LOWER(username) = LOWER($1)
-    `;
-    const result = await pool.query(query, [username]);
-    return result.rows[0];
-}
