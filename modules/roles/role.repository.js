@@ -9,6 +9,11 @@ export const getAllRoles = async () => {
     const result = await pool.query("SELECT * FROM roles");
     return result.rows;
 }
+export const getRoleById = async (id) => {
+    const query = "SELECT * FROM roles WHERE id = $1";
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+};
 export const getRoleByName = async (name) => {
     const query = "SELECT * FROM roles WHERE LOWER(name) = LOWER($1)";
     const result = await pool.query(query, [name.trim()]);
