@@ -1,3 +1,4 @@
+import cors from "cors";
 import dotenv from 'dotenv';
 import express from 'express';
 import indexRoutes from './modules/index/index.routes.js';
@@ -6,6 +7,7 @@ import userRoutes from "./modules/users/user.routes.js";
 dotenv.config();
 const app = express();
 app.use(express.json());
+app.use(cors());
 // Routes
 app.use("/",indexRoutes);
 app.use("/roles", roleRoutes);

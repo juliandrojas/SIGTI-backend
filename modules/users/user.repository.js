@@ -27,7 +27,6 @@ export const createUser = async ({ name, firstLastName, secondLastName = "", ema
   if (!name?.trim() || !firstLastName?.trim() || !email?.trim() || !password?.trim()) {
     throw new Error("Todos los campos obligatorios deben estar presentes.");
   }
-
   // Generamos el nombre de usuario de forma asíncrona
   const username = await generateUniqueUsername(name, firstLastName, secondLastName);
 
@@ -66,6 +65,24 @@ export const getUsername = async (username) => {
   `;
   const result = await pool.query(query, [username.trim()]);
     return result.rows[0];
+};
+
+export const saveResetToken = async (email, tokenHash, expiresAt) => {
+  const query = `
+    UPDATE users
+    SET reset_token_hash = $1,
+        reset_token_expires_at = $2
+    WHERE LOWER(email) = LOWER($3)
+    RETURNING id, email
+  `;
+
+  const result = await pool.query(query, [
+    tokenHash,
+    expiresAt,
+    email.trim()
+  ]);
+
+  return result.rows[0];
 };
 export const findUserForLogin = async (username) =>{
     const query = `
