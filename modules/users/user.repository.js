@@ -69,9 +69,9 @@ export const getUsername = async (username) => {
 
 export const findUserForLogin = async (username) =>{
     const query = "SELECT id, name, username, email, password, role_id FROM users WHERE LOWER(username) = LOWER($1)";
-    const result = await pool.query(query, [username]);
-    const user = result.rows[0];
-}
+  const result = await pool.query(query, [username.trim()]);
+  return result.rows[0];
+};
 
 export const saveResetToken = async (email, tokenHash, expiresAt) => {
   const query = `
@@ -88,5 +88,32 @@ export const saveResetToken = async (email, tokenHash, expiresAt) => {
     email.trim()
   ]);
 
+  return result.rows[0];
+};
+
+export const findUserByResetToken = async (tokenHash) => {
+  const query = `
+    SELECT id
+    FROM users
+    WHERE reset_token_hash = $1
+      AND reset_token_expires_at > NOW()
+  `;
+
+  const result = await pool.query(query, [tokenHash]);
+  return result.rows[0];
+};
+
+export const updatePasswordByResetToken = async (tokenHash, passwordHash) => {
+  const query = `
+    UPDATE users
+    SET password = $1,
+        reset_token_hash = NULL,
+        reset_token_expires_at = NULL
+    WHERE reset_token_hash = $2
+      AND reset_token_expires_at > NOW()
+    RETURNING id, name, username, email, role_id
+  `;
+
+  const result = await pool.query(query, [passwordHash, tokenHash]);
   return result.rows[0];
 };

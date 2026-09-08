@@ -2,6 +2,8 @@ import {
     createUserService,
     findUserForLoginService,
     getUsernameService,
+    requestPasswordResetService,
+    resetPasswordService,
 } from "./user.service.js";
 
 export const createUserController = async (req, res) => {
@@ -61,5 +63,52 @@ export const findUserForLoginController = async (req, res) => {
     return res.status(500).json({
       message: error.message,
     });
+  }
+};
+
+export const requestPasswordResetController = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email?.trim()) {
+      return res.status(400).json({ message: "El correo es obligatorio" });
+    }
+
+    await requestPasswordResetService(email);
+
+    return res.status(200).json({
+      message: "Si el correo existe, recibirás instrucciones para recuperar tu contraseña",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token y contraseña son obligatorios" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "La contraseña debe tener al menos 8 caracteres",
+      });
+    }
+
+    const user = await resetPasswordService(token, password);
+
+    if (!user) {
+      return res.status(400).json({ message: "El token no es válido o ha expirado" });
+    }
+
+    return res.status(200).json({
+      message: "Contraseña actualizada correctamente",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
