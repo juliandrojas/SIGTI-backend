@@ -70,7 +70,7 @@ export const getUsername = async (username) => {
 export const findUserForLogin = async (username) =>{
     const query = "SELECT id, name, username, email, password, role_id FROM users WHERE LOWER(username) = LOWER($1)";
     const result = await pool.query(query, [username]);
-    const user = result.rows[0];
+  return result.rows[0];
 }
 
 export const saveResetToken = async (email, tokenHash, expiresAt) => {
