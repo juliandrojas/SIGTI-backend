@@ -1,20 +1,7 @@
 import { Router } from 'express';
-import {
-    createUserAdminController,
-    createUserController,
-    getAllUsersController,
-    getUserAdminController,
-    getUserController,
-    updateUserController,
-    updateUserPasswordController
-} from './user.controller.js';
+import { createUserController, getUsernameController, loginUserController } from './user.controller.js';
 const router = Router();
-
-router.post("/admin", createUserAdminController);
-router.post("/user", createUserController);
-router.get("/admin", getUserAdminController);
-router.get("/user", getUserController);
-router.get("/user/all", getAllUsersController);
-router.put("/:id", updateUserController);
-router.patch("/:id/password", updateUserPasswordController);
+router.post("/create", createUserController);
+router.get("/:username", getUsernameController);
+router.post("/login", loginUserController);
 export default router;
