@@ -1,4 +1,4 @@
-import { createRoleService, getAllRolesService, getRoleByNameService, getRoleByIdService, updateRoleService } from "./role.service.js";
+import { createRoleService, getAllRolesService, getRoleByIdService, getRoleByNameService, updateRoleService } from "./role.service.js";
 
 export const createRoleController = async (req, res) => {
     try {
@@ -79,7 +79,21 @@ export const updateRoleController = async (req, res) => {
     try {
         const { id } = req.params;
         const { name } = req.body;
+
+        if (typeof name !== "string" || name.trim() === "") {
+            return res.status(400).json({
+                message: "El campo name es obligatorio"
+            });
+        }
+
         const role = await updateRoleService( id, name );
+
+        if (!role) {
+            return res.status(404).json({
+                message: "Rol no encontrado"
+            });
+        }
+
         res.status(200).json({
             message: "Rol actualizado correctamente", role
         })
