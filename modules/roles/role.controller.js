@@ -1,4 +1,4 @@
-import { createRoleService, getAllRolesService, getRoleByNameService, updateRoleService } from "./role.service.js";
+import { createRoleService, getAllRolesService, getRoleByNameService, getRoleByIdService, updateRoleService } from "./role.service.js";
 
 export const createRoleController = async (req, res) => {
     try {
@@ -47,6 +47,34 @@ export const getRoleByNameController = async (req, res) => {
         });
     }
 }
+
+export const getRoleByIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validación básica: que el ID sea numérico
+    if (isNaN(id)) {
+      return res.status(400).json({
+        message: "El ID del rol debe ser un número válido"
+      });
+    }
+
+    const role = await getRoleByIdService(id);
+
+    if (!role) {
+      return res.status(404).json({
+        message: "Rol no encontrado"
+      });
+    }
+
+    res.status(200).json(role);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 export const updateRoleController = async (req, res) => {
     try {
         const { id } = req.params;
