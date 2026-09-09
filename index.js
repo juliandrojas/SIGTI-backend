@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import indexRoutes from './modules/index/index.routes.js';
+import inventoryRoutes from './modules/inventory/inventory.routes.js';
 import roleRoutes from "./modules/roles/role.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 dotenv.config();
@@ -13,6 +14,7 @@ app.use(cors());
 app.use("/",indexRoutes);
 app.use("/roles", authenticateToken, roleRoutes);
 app.use("/users", userRoutes);
+app.use("/inventory", authenticateToken, inventoryRoutes);
 app.listen(process.env.PORT, () => {
     console.log('Server is running on port ' + process.env.PORT);
 });
