@@ -1,12 +1,15 @@
 import pool from "../config/db.js";
 
-const getAllowedAdminRoles = () => {
-  const configuredRoles = process.env.ADMIN_ROLE_NAMES || "admin,administrador";
+const normalizeRoleName = (roleName = "") =>
+  roleName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 
-  return configuredRoles
-    .split(",")
-    .map((role) => role.trim().toLowerCase())
-    .filter(Boolean);
+const getAllowedAdminRoles = () => {
+  return [normalizeRoleName(process.env.ADMIN_ROLE_NAMES || "administrador")];
 };
 
 export const requireAdmin = async (req, res, next) => {
@@ -21,7 +24,7 @@ export const requireAdmin = async (req, res, next) => {
       "SELECT name FROM roles WHERE id = $1 LIMIT 1",
       [roleId]
     );
-    const roleName = result.rows[0]?.name?.trim().toLowerCase();
+    const roleName = normalizeRoleName(result.rows[0]?.name);
 
     if (!roleName || !getAllowedAdminRoles().includes(roleName)) {
       return res.status(403).json({ message: "Permisos de administrador requeridos" });
