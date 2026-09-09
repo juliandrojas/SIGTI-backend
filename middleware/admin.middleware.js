@@ -8,25 +8,25 @@ const normalizeRoleName = (roleName = "") =>
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-const getAllowedAdminRoles = () => {
-  return [normalizeRoleName(process.env.ADMIN_ROLE_NAMES || "administrador")];
-};
-
 export const requireAdmin = async (req, res, next) => {
   try {
-    const roleId = Number(req.user?.roleId);
+    const userId = Number(req.user?.sub);
 
-    if (!Number.isInteger(roleId) || roleId <= 0) {
+    if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(403).json({ message: "Permisos de administrador requeridos" });
     }
 
     const result = await pool.query(
-      "SELECT name FROM roles WHERE id = $1 LIMIT 1",
-      [roleId]
+      `SELECT roles.name
+       FROM users
+       INNER JOIN roles ON roles.id = users.role_id
+       WHERE users.id = $1
+       LIMIT 1`,
+      [userId]
     );
     const roleName = normalizeRoleName(result.rows[0]?.name);
 
-    if (!roleName || !getAllowedAdminRoles().includes(roleName)) {
+    if (roleName !== "administrador") {
       return res.status(403).json({ message: "Permisos de administrador requeridos" });
     }
 
