@@ -1,7 +1,18 @@
 import { Router } from 'express';
-import { createUserController, findUserForLoginController, getUsernameController } from './user.controller.js';
+import {
+    createUserController,
+    findUserForLoginController,
+    getUsernameController,
+    requestPasswordResetController,
+    resetPasswordController,
+} from './user.controller.js';
+
 const router = Router();
+
 router.post("/create", createUserController);
-router.get("/:username", getUsernameController);
 router.post("/login", findUserForLoginController);
+router.post("/recovery", requestPasswordResetController);
+router.post("/reset-password", resetPasswordController);
+router.get("/:username", getUsernameController);
+
 export default router;
