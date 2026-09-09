@@ -90,3 +90,31 @@ export const saveResetToken = async (email, tokenHash, expiresAt) => {
 
   return result.rows[0];
 };
+
+export const getUserByResetToken = async (tokenHash) => {
+  const query = `
+    SELECT id
+    FROM users
+    WHERE reset_token_hash = $1
+      AND reset_token_expires_at > NOW()
+    LIMIT 1
+  `;
+
+  const result = await pool.query(query, [tokenHash]);
+  return result.rows[0];
+};
+
+export const updatePasswordByResetToken = async (tokenHash, hashedPassword) => {
+  const query = `
+    UPDATE users
+    SET password = $1,
+        reset_token_hash = NULL,
+        reset_token_expires_at = NULL
+    WHERE reset_token_hash = $2
+      AND reset_token_expires_at > NOW()
+    RETURNING id
+  `;
+
+  const result = await pool.query(query, [hashedPassword, tokenHash]);
+  return result.rows[0];
+};

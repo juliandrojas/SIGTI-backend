@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from 'dotenv';
 import express from 'express';
+import { requireAdmin } from "./middleware/admin.middleware.js";
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import indexRoutes from './modules/index/index.routes.js';
 import inventoryRoutes from './modules/inventory/inventory.routes.js';
@@ -12,9 +13,9 @@ app.use(express.json());
 app.use(cors());
 // Routes
 app.use("/",indexRoutes);
-app.use("/roles", authenticateToken, roleRoutes);
+app.use("/roles", authenticateToken, requireAdmin, roleRoutes);
 app.use("/users", userRoutes);
-app.use("/inventory", authenticateToken, inventoryRoutes);
+app.use("/inventory", authenticateToken, requireAdmin, inventoryRoutes);
 app.listen(process.env.PORT, () => {
     console.log('Server is running on port ' + process.env.PORT);
 });
