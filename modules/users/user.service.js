@@ -40,9 +40,12 @@ export const requestPasswordResetService = async (email) => {
     const { token, tokenHash, expiresAt } = createResetToken();
     const user = await saveResetToken(email, tokenHash, expiresAt);
 
-    if (user) {
-        await sendPasswordResetEmail({ email: user.email, token });
+    if (!user) {
+        return false;
     }
+
+    await sendPasswordResetEmail({ email: user.email, token });
+    return true;
 };
 
 export const resetPasswordService = async (token, password) => {
