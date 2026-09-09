@@ -1,4 +1,5 @@
 import { generateToken } from "../../utils/jwt.js";
+import { sendWelcomeEmail } from "../../utils/mailer.js";
 import {
     createUserService,
     findUserForLoginService,
@@ -16,7 +17,20 @@ export const createUserController = async (req, res) => {
       password,
     });
 
-    return res.status(201).json(newUser);
+    let emailSent = false;
+    try {
+      emailSent = await sendWelcomeEmail(newUser);
+    } catch (emailError) {
+      console.error("No se pudo enviar el correo de bienvenida:", emailError.message);
+    }
+
+    return res.status(201).json({
+      user: newUser,
+      emailSent,
+      message: emailSent
+        ? "Usuario creado y correo enviado correctamente"
+        : "Usuario creado, pero no se pudo enviar el correo de bienvenida",
+    });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
