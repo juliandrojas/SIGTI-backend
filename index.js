@@ -16,9 +16,11 @@ app.use("/",indexRoutes);
 app.use("/roles", authenticateToken, requireAdmin, roleRoutes);
 app.use("/users", userRoutes);
 app.use("/inventory", authenticateToken, requireAdmin, inventoryRoutes);
-app.listen(process.env.PORT, () => {
-    console.log('Server is running on port ' + process.env.PORT);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(process.env.PORT, () => {
+      console.log('Server is running on port ' + process.env.PORT);
+  });
+}
 // Middleware centralizado de errores (al final de api/index.js)
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -28,3 +30,5 @@ app.use((err, req, res, next) => {
     message: err.message || 'Error interno del servidor',
   });
 });
+
+export default app;

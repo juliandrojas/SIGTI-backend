@@ -4,7 +4,6 @@ import { createResetToken, hashResetToken } from "../../utils/resetPassword.js";
 import {
     createUser,
     findUserForLogin,
-    getUserByResetToken,
     getUsername,
     saveResetToken,
     updatePasswordByResetToken,
@@ -52,12 +51,10 @@ export const resetPasswordService = async (token, password) => {
     }
 
     const tokenHash = hashResetToken(token);
-    const user = await getUserByResetToken(tokenHash);
+    const hashedPassword = await hashPassword(password);
+    const passwordUpdated = await updatePasswordByResetToken(tokenHash, hashedPassword);
 
-    if (!user) {
+    if (!passwordUpdated) {
         throw new Error("El enlace de recuperación no es válido o ha expirado");
     }
-
-    const hashedPassword = await hashPassword(password);
-    await updatePasswordByResetToken(tokenHash, hashedPassword);
 };
