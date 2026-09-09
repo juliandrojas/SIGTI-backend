@@ -1,8 +1,18 @@
 import { comparePassword } from "../../utils/password.js";
+import { sendWelcomeEmail } from "../../utils/mailer.js";
 import { createUser, findUserForLogin, getUsername } from "./user.repository.js";
 
 export const createUserService = async (userData) => {
-    return createUser(userData);
+    const user = await createUser(userData);
+    let emailSent = false;
+
+    try {
+        emailSent = await sendWelcomeEmail(user);
+    } catch (error) {
+        console.error("No se pudo enviar el correo de bienvenida:", error.message);
+    }
+
+    return { ...user, emailSent };
 };
 export const getUsernameService = async (username) => {
     return getUsername(username);
