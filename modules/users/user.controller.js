@@ -73,9 +73,12 @@ export const findUserForLoginController = async (req, res) => {
 
 export const requestPasswordResetController = async (req, res) => {
   try {
-    await requestPasswordResetService(req.body.email);
+    await requestPasswordResetService(req.body?.email);
   } catch (error) {
     console.error("No se pudo procesar la recuperación:", error.message);
+    return res.status(500).json({
+      message: "No fue posible enviar el correo de recuperación. Intenta nuevamente más tarde.",
+    });
   }
 
   return res.status(200).json({
