@@ -1,7 +1,13 @@
 import crypto from "crypto";
 
-const resetTokenHash = crypto
-  .createHash("sha256")
-  .update(resetToken)
-  .digest("hex");
-const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+export const generateResetToken = () => {
+  return crypto.randomBytes(32).toString("hex");
+};
+
+export const hashResetToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+export const getResetTokenExpiry = (minutes = 15) => {
+  return new Date(Date.now() + minutes * 60 * 1000);
+};
