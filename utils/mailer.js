@@ -9,7 +9,7 @@ const escapeHtml = (value = "") =>
     .replace(/'/g, "&#039;");
 
 const getFrontendUrl = () =>
-  (process.env.FRONTEND_URL || process.env.FRONTEND_RESET_URL || "").replace(/\/$/, "");
+  (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 
 const renderEmail = ({ preheader, title, greeting, content, details = [], action, note }) => {
   const detailsHtml = details.length
@@ -143,10 +143,10 @@ export const sendPasswordResetEmail = async ({ email, token }) => {
     throw new Error("Faltan EMAIL_USER o EMAIL_PASS para enviar recuperación.");
   }
 
-  const frontendUrl = process.env.FRONTEND_RESET_URL;
+  const frontendUrl = getFrontendUrl();
 
   if (!frontendUrl) {
-    throw new Error("Falta FRONTEND_RESET_URL para generar el enlace de recuperación.");
+    throw new Error("Falta FRONTEND_URL para generar el enlace de recuperación.");
   }
 
   await transporter.sendMail({
