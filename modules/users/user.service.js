@@ -1,6 +1,14 @@
-import { comparePassword } from "../../utils/password.js";
-import { sendWelcomeEmail } from "../../utils/mailer.js";
-import { createUser, findUserForLogin, getUsername } from "./user.repository.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../../utils/mailer.js";
+import { comparePassword, hashPassword } from "../../utils/password.js";
+import { createResetToken, hashResetToken } from "../../utils/resetPassword.js";
+import {
+    createUser,
+    findUserForLogin,
+    getUserByResetToken,
+    getUsername,
+    saveResetToken,
+    updatePasswordByResetToken,
+} from "./user.repository.js";
 
 export const createUserService = async (userData) => {
     const user = await createUser(userData);
@@ -24,3 +32,32 @@ export const findUserForLoginService = async (username, password) => {
     if(!passwordIsValid) return null;
     return user;
 }
+
+export const requestPasswordResetService = async (email) => {
+    if (!email?.trim()) {
+        throw new Error("El correo es obligatorio");
+    }
+
+    const { token, tokenHash, expiresAt } = createResetToken();
+    const user = await saveResetToken(email, tokenHash, expiresAt);
+
+    if (user) {
+        await sendPasswordResetEmail({ email: user.email, token });
+    }
+};
+
+export const resetPasswordService = async (token, password) => {
+    if (!token?.trim() || !password?.trim() || password.length < 6) {
+        throw new Error("El token y una contraseña de al menos 6 caracteres son obligatorios");
+    }
+
+    const tokenHash = hashResetToken(token);
+    const user = await getUserByResetToken(tokenHash);
+
+    if (!user) {
+        throw new Error("El enlace de recuperación no es válido o ha expirado");
+    }
+
+    const hashedPassword = await hashPassword(password);
+    await updatePasswordByResetToken(tokenHash, hashedPassword);
+};
