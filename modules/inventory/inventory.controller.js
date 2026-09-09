@@ -29,7 +29,8 @@ export const getInventoryItemByIdController = async (req, res) => {
 
     return res.status(200).json(item);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const status = error.message.includes("no es válido") ? 400 : 500;
+    return res.status(status).json({ message: error.message });
   }
 };
 
