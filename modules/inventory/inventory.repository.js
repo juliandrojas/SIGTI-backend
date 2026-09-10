@@ -259,7 +259,7 @@ export const createInventoryLoan = async (loan) => {
         itemId,
         quantity,
         String(payload.requested_by).trim(),
-        payload.position ?? null,
+        payload.position?.trim() ? payload.position.trim() : "Usuario Externo",
         payload.start_datetime ?? new Date(),
         payload.expected_return_datetime ?? null,
         payload.pickup_signature ?? null,

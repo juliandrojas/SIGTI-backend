@@ -15,7 +15,7 @@ app.use(cors());
 app.use("/",indexRoutes);
 app.use("/roles", authenticateToken, requireAdmin, roleRoutes);
 app.use("/users", userRoutes);
-app.use("/inventory", authenticateToken, requireAdmin, inventoryRoutes);
+app.use("/inventory", authenticateToken, inventoryRoutes);
 if (process.env.VERCEL !== "1") {
   app.listen(process.env.PORT, () => {
       console.log('Server is running on port ' + process.env.PORT);

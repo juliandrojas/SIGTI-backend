@@ -16,6 +16,7 @@ export const generateToken = (user) => {
       sub: user.id,
       username: user.username,
       roleId: user.role_id,
+      roleName: user.role_name,
     },
     getJwtSecret(),
     { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
