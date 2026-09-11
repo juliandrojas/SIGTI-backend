@@ -1,23 +1,12 @@
 /**
- * Script de importación masiva de empleados desde Excel a SIGTI
+ * Script de importación masiva de empleados a SIGTI
  * 
- * Lee el archivo "Informe empleados.xlsx" de la raíz del proyecto,
- * genera un username (nombre.apellido) único por empleado,
- * asigna el rol según el cargo, y los inserta en la base de datos.
+ * Lee el archivo "Informe empleados con area.xlsx", omite los metadatos/encabezados,
+ * asigna Rol 1 (sistemas) a las 4 personas del área TI y Rol 2 (usuario) al resto.
+ * Contraseña por defecto para todos: petrocasinos2026
  * 
- * Cargos de Sistemas (Rol 2):
- *   - Profesional De Sistemas
- *   - Auxiliar De Sistemas
- *   - Profesional De Telecomunicaciones
- * 
- * El resto de cargos reciben Rol 3 (Usuario externo)
- * 
- * Contraseña temporal para todos: petrocasinos2026
- * 
- * Uso:
+ * Ejecutar desde la carpeta /server:
  *   node scripts/importar-empleados.js
- * 
- * Ejecutar desde la carpeta /server
  */
 
 import xlsx from 'xlsx';
@@ -25,43 +14,53 @@ import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Configuración ────────────────────────────────────────────────────────────
 
-const EXCEL_PATH = path.resolve(__dirname, '../../Informe empleados.xlsx');
+const EXCEL_PATH = path.resolve(__dirname, '../../Informe empleados con area.xlsx');
 const TEMP_PASSWORD = 'petrocasinos2026';
-const ROL_SISTEMAS = 2;
-const ROL_USUARIO = 3;
-const DATA_START_ROW = 9; // Fila 10 en Excel (índice 9 base-0) - primera fila de datos
 
-const CARGOS_SISTEMAS = [
-  'profesional de sistemas',
-  'auxiliar de sistemas',
-  'profesional de telecomunicaciones',
-];
+const ROL_SISTEMAS = 1;
+const ROL_USUARIOS = 2;
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 
 function normalizarTexto(texto) {
-  return (texto || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return (texto || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
-function asignarRol(cargo) {
-  const cargoNorm = normalizarTexto(cargo);
-  return CARGOS_SISTEMAS.some(c => cargoNorm.includes(c))
-    ? ROL_SISTEMAS
-    : ROL_USUARIO;
+function normalizarParaUsername(texto) {
+  return normalizarTexto(texto).replace(/[^a-z0-9]/g, '');
 }
 
 /**
- * Parsea el nombre completo del Excel.
- * El formato es "Nombre(s) Apellido1 Apellido2" donde los apellidos son las
- * últimas dos palabras y el nombre el resto.
+ * Valida si el registro corresponde a una persona del área de sistemas
+ */
+function asignarRol(area = '', cargo = '') {
+  const areaNorm = normalizarTexto(area);
+  const cargoNorm = normalizarTexto(cargo);
+
+  const esSistemas = areaNorm.includes('sistema') ||
+    areaNorm.includes('tecnolog') ||
+    cargoNorm.includes('sistemas') ||
+    cargoNorm.includes('telecomunicaciones');
+
+  return esSistemas ? ROL_SISTEMAS : ROL_USUARIOS;
+}
+
+/**
+ * Parsea el nombre separando nombres y apellidos reales
  */
 function parsearNombre(nombreCompleto) {
-  const partes = nombreCompleto.trim().split(/\s+/);
+  const partes = (nombreCompleto || '').toString().trim().split(/\s+/);
 
   if (partes.length < 2) {
     return { name: partes[0] || '', firstLastName: '', secondLastName: '' };
@@ -72,57 +71,105 @@ function parsearNombre(nombreCompleto) {
   }
 
   const secondLastName = partes.pop();
-  const firstLastName = partes.pop();
+  let firstLastName = partes.pop();
+
+  const particulas = ['de', 'del', 'la', 'las', 'los', 'san'];
+  if (partes.length > 0 && particulas.includes(partes[partes.length - 1].toLowerCase())) {
+    firstLastName = `${partes.pop()} ${firstLastName}`;
+  }
+
   const name = partes.join(' ');
   return { name, firstLastName, secondLastName };
 }
 
-async function existsUsername(client, username) {
+async function existsUser(client, username, email) {
   const result = await client.query(
-    'SELECT 1 FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1',
-    [username]
+    'SELECT 1 FROM public.users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2) LIMIT 1',
+    [username, email]
   );
   return result.rowCount > 0;
 }
 
-async function generateUniqueUsername(client, name, firstLastName) {
-  const base = `${normalizarTexto(name.split(' ')[0])}.${normalizarTexto(firstLastName)}`;
+async function generateUniqueCredentials(client, name, firstLastName) {
+  const apellidoClave = firstLastName.split(/\s+/).pop();
+  const base = `${normalizarParaUsername(name.split(' ')[0])}.${normalizarParaUsername(apellidoClave)}`;
+
   let username = base;
+  let email = `${username}@petrocasinos.com`;
   let counter = 1;
 
-  while (await existsUsername(client, username)) {
+  while (await existsUser(client, username, email)) {
     username = `${base}${counter}`;
+    email = `${username}@petrocasinos.com`;
     counter++;
   }
 
-  return username;
+  return { username, email };
 }
 
-// ─── Leer Excel ───────────────────────────────────────────────────────────────
+// ─── Leer Excel y Filtrar Encabezados ──────────────────────────────────────────
 
-function leerEmpleados() {
+function leerEmpleadosConArea() {
+  if (!fs.existsSync(EXCEL_PATH)) {
+    throw new Error(`No se encontró el archivo: "${EXCEL_PATH}". Asegúrate de que esté en la raíz.`);
+  }
+
   const wb = xlsx.readFile(EXCEL_PATH);
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = xlsx.utils.sheet_to_json(ws, { header: 1 });
+  const rows = xlsx.utils.sheet_to_json(ws, { header: 1 });
 
-  return data.slice(DATA_START_ROW)
-    .filter(row => row[0] && typeof row[0] === 'string' && row[0].trim().length > 0)
+  // Frases o palabras clave presentes en la cabecera que deben descartarse
+  const patronesIgnorados = [
+    'empleado',
+    'generado',
+    'incluido',
+    'campo seleccionado',
+    'nombre completo',
+    'cargo',
+    'area'
+  ];
+
+  return rows
+    .filter(row => {
+      if (!row || !row[0]) return false;
+
+      const celdaTexto = normalizarTexto(row[0]);
+
+      // Si la celda es muy corta o contiene texto de encabezado/reporte, se ignora
+      if (celdaTexto.length < 4) return false;
+      const esEncabezado = patronesIgnorados.some(patron => celdaTexto.includes(patron));
+      if (esEncabezado) return false;
+
+      // Debe contener al menos dos palabras (nombre y apellido)
+      const palabras = celdaTexto.split(/\s+/).filter(Boolean);
+      return palabras.length >= 2;
+    })
     .map(row => ({
-      nombreCompleto: row[0].trim(),
-      cargo: (row[1] || '').trim(),
+      nombreCompleto: String(row[0]).trim(),
+      cargo: row[1] ? String(row[1]).trim() : '',
+      area: row[2] ? String(row[2]).trim() : ''
     }));
 }
 
-// ─── Importación ──────────────────────────────────────────────────────────────
+// ─── Proceso de Inserción Masiva ──────────────────────────────────────────────
 
 async function importar() {
-  const empleados = leerEmpleados();
-  console.log(`\n📋 Se encontraron ${empleados.length} empleados en el Excel.\n`);
+  console.log(`\n📖 Leyendo archivo y limpiando metadatos...`);
+  const empleados = leerEmpleadosConArea();
+  console.log(`📋 Se validaron ${empleados.length} empleados reales para importar.\n`);
 
+  if (empleados.length === 0) {
+    console.error('❌ No se encontraron datos válidos.');
+    process.exit(1);
+  }
+
+  // Precalcula el hash una sola vez para que la ejecución tarde pocos segundos
   const hashedPassword = await bcrypt.hash(TEMP_PASSWORD, 10);
   const client = await pool.connect();
 
   let insertados = 0;
+  let sistemasCount = 0;
+  let usuariosCount = 0;
   let omitidos = 0;
   const errores = [];
 
@@ -132,32 +179,37 @@ async function importar() {
         const { name, firstLastName, secondLastName } = parsearNombre(emp.nombreCompleto);
 
         if (!name || !firstLastName) {
-          console.warn(`  ⚠️  Nombre inválido, omitiendo: "${emp.nombreCompleto}"`);
+          console.warn(`  ⚠️ Nombre no procesable: "${emp.nombreCompleto}"`);
           omitidos++;
           continue;
         }
 
-        const username = await generateUniqueUsername(client, name, firstLastName);
-        const roleId = asignarRol(emp.cargo);
+        const { username, email } = await generateUniqueCredentials(client, name, firstLastName);
+        const roleId = asignarRol(emp.area, emp.cargo);
 
         const fullLastName = secondLastName
           ? `${firstLastName} ${secondLastName}`
           : firstLastName;
 
-        // Email placeholder — puede actualizarse después
-        const email = `${username}@petrocasinos.com`;
-
+        // Inserción directa en users respetando el esquema oficial
         await client.query(
-          `INSERT INTO users (name, lastname, username, email, password, role_id)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+          `INSERT INTO public.users (name, lastname, username, email, password, role_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (username) DO NOTHING`,
           [name, fullLastName, username, email, hashedPassword, roleId]
         );
 
-        const rolLabel = roleId === ROL_SISTEMAS ? 'Sistemas (2)' : 'Usuario  (3)';
-        console.log(`  ✅  ${username.padEnd(35)} | Rol: ${rolLabel} | Cargo: ${emp.cargo}`);
+        if (roleId === ROL_SISTEMAS) {
+          sistemasCount++;
+          console.log(`  💻 [SISTEMAS (1)]  ${username.padEnd(25)} | ${emp.nombreCompleto} | Área: ${emp.area || 'N/A'}`);
+        } else {
+          usuariosCount++;
+          console.log(`  👤 [USUARIO  (2)]  ${username.padEnd(25)} | ${emp.nombreCompleto}`);
+        }
+
         insertados++;
       } catch (err) {
-        console.error(`  ❌  Error con "${emp.nombreCompleto}": ${err.message}`);
+        console.error(`  ❌ Error con "${emp.nombreCompleto}": ${err.message}`);
         errores.push({ nombre: emp.nombreCompleto, error: err.message });
       }
     }
@@ -166,21 +218,18 @@ async function importar() {
   }
 
   console.log('\n─────────────────────────────────────────────────────────');
-  console.log(`✅  Insertados:  ${insertados}`);
-  console.log(`⏭️  Omitidos:    ${omitidos}`);
-  console.log(`❌  Con errores: ${errores.length}`);
-  if (errores.length > 0) {
-    console.log('\nDetalles de errores:');
-    errores.forEach(e => console.log(`  - ${e.nombre}: ${e.error}`));
-  }
-  console.log('\n🔑  Contraseña temporal: petrocasinos2026');
+  console.log(`✅ Total registros insertados: ${insertados}`);
+  console.log(`💻 Rol Sistemas (1) - Admin:  ${sistemasCount}`);
+  console.log(`👤 Rol Usuarios (2):          ${usuariosCount}`);
+  console.log(`⏭️ Omitidos:                   ${omitidos}`);
+  console.log(`❌ Errores:                    ${errores.length}`);
+  console.log(`🔑 Contraseña asignada:        ${TEMP_PASSWORD}`);
   console.log('─────────────────────────────────────────────────────────\n');
 
   await pool.end();
 }
 
-// ─── Ejecución ────────────────────────────────────────────────────────────────
 importar().catch(err => {
-  console.error('Error fatal:', err);
+  console.error('Error fatal al importar:', err);
   process.exit(1);
 });
