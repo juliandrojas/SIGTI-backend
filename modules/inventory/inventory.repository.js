@@ -131,6 +131,12 @@ export const updateInventoryItem = async (id, item) => {
   const parsedId = normalizePositiveInteger(id, "id");
   const safeItem = validateInventoryItemPayload(item, true);
 
+  // Estos campos son administrados por el sistema y nunca deben formar parte
+  // de la lista dinámica de columnas actualizadas.
+  delete safeItem.id;
+  delete safeItem.created_at;
+  delete safeItem.updated_at;
+
   if (Object.keys(safeItem).length === 0) {
     return await getInventoryItemById(parsedId);
   }
