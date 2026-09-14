@@ -40,6 +40,9 @@ export const createInventoryItemController = async (req, res) => {
     const item = await createInventoryItemService(req.body);
     return res.status(201).json(item);
   } catch (error) {
+    if (error?.code === "23505" && error?.constraint === "idx_inventory_items_asset_code") {
+      return res.status(409).json({ message: "El código de equipo ya está registrado. Verifica el código ingresado." });
+    }
     return res.status(400).json({ message: error.message });
   }
 };
