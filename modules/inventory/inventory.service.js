@@ -8,6 +8,7 @@ import {
     updateInventoryItem,
     updateInventoryLoanReturn,
 } from "./inventory.repository.js";
+import { createRequest, getAllRequests, getMyRequests, deliverRequest, rejectRequest, returnRequest } from "./request.repository.js";
 
 const isValidId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 
@@ -70,3 +71,9 @@ export const updateInventoryLoanReturnService = async (loanId, payload) => {
 
   return await updateInventoryLoanReturn(loanId, payload);
 };
+export const createInventoryRequestService = (payload, userId) => createRequest(payload, userId);
+export const getMyInventoryRequestsService = (userId) => getMyRequests(userId);
+export const getAllInventoryRequestsService = () => getAllRequests();
+export const deliverInventoryRequestService = (id, userId, previousReceived) => deliverRequest(Number(id), userId, previousReceived);
+export const rejectInventoryRequestService = (id, userId, reason) => rejectRequest(Number(id), userId, reason);
+export const returnInventoryRequestService = (id, userId) => returnRequest(Number(id), userId);

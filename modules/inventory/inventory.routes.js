@@ -1,8 +1,6 @@
 import { Router } from 'express';
-import {
-    requireAdminOrSystems,
-    requireExternalOrAdmin,
-} from '../../middleware/role.middleware.js';
+import { requireAdmin } from '../../middleware/admin.middleware.js';
+import { requireRequesterOrAdmin } from '../../middleware/role.middleware.js';
 import {
     createInventoryItemController,
     createInventoryLoanController,
@@ -12,6 +10,7 @@ import {
     getInventoryItemByIdController,
     updateInventoryItemController,
     updateInventoryLoanReturnController,
+    createInventoryRequestController, getMyInventoryRequestsController, getAllInventoryRequestsController, deliverInventoryRequestController, rejectInventoryRequestController, returnInventoryRequestController,
 } from './inventory.controller.js';
 
 const router = Router();
@@ -19,16 +18,22 @@ const router = Router();
 // Artículos de inventario
 router.get('/items', getAllInventoryItemsController);
 router.get('/items/:id', getInventoryItemByIdController);
-router.post('/items', requireAdminOrSystems, createInventoryItemController);
-router.patch('/items/:id', requireAdminOrSystems, updateInventoryItemController);
-router.delete('/items/:id', requireAdminOrSystems, deleteInventoryItemController);
+router.post('/items', requireAdmin, createInventoryItemController);
+router.patch('/items/:id', requireAdmin, updateInventoryItemController);
+router.delete('/items/:id', requireAdmin, deleteInventoryItemController);
 
 // Préstamos
-// Historial: Solo Administrador (1) y Usuario Área Sistemas (2)
-router.get('/loans', requireAdminOrSystems, getAllInventoryLoansController);
-router.patch('/loans/:id/return', requireAdminOrSystems, updateInventoryLoanReturnController);
+// Historial y devoluciones: solo área de Sistemas (rol 1).
+router.get('/loans', requireAdmin, getAllInventoryLoansController);
+router.patch('/loans/:id/return', requireAdmin, updateInventoryLoanReturnController);
 
-// Solicitud/Registro de préstamo: Usuario Externo (3) y Administrador
-router.post('/loans', requireExternalOrAdmin, createInventoryLoanController);
+// Solicitud de préstamo: Usuario general (2) y Administrador para soporte.
+router.post('/loans', requireRequesterOrAdmin, createInventoryLoanController);
+router.post('/requests', requireRequesterOrAdmin, createInventoryRequestController);
+router.get('/requests/mine', requireRequesterOrAdmin, getMyInventoryRequestsController);
+router.get('/requests', requireAdmin, getAllInventoryRequestsController);
+router.patch('/requests/:id/deliver', requireAdmin, deliverInventoryRequestController);
+router.patch('/requests/:id/reject', requireAdmin, rejectInventoryRequestController);
+router.patch('/requests/:id/return', requireAdmin, returnInventoryRequestController);
 
 export default router;

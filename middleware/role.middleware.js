@@ -52,15 +52,9 @@ export const requireRoles = ({ roleIds = [], roleNames = [] }) => {
   };
 };
 
-// 1. Administrador y 2. Usuario Área Sistemas
-export const requireAdminOrSystems = requireRoles({
+// Los usuarios generales (rol 2) pueden crear solicitudes; el administrador puede hacerlo como soporte.
+export const requireRequesterOrAdmin = requireRoles({
   roleIds: [1, 2],
-  roleNames: ["administrador", "usuario area sistemas", "area sistemas", "sistemas"],
-});
-
-// 3. Usuario Externo (y Administrador para soporte)
-export const requireExternalOrAdmin = requireRoles({
-  roleIds: [1, 3],
-  roleNames: ["usuario externo", "externo", "administrador"],
+  roleNames: ["administrador"],
 });
 
