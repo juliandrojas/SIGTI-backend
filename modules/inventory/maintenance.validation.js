@@ -14,6 +14,8 @@ export const addMaintenancePeriod = (value) => {
   return date.toISOString().slice(0, 10);
 };
 
+export const isMaintenanceRecent = (record, referenceDate) => Boolean(record?.next_due_date && String(record.next_due_date).slice(0, 10) >= referenceDate);
+
 export const validateMaintenance = (payload = {}) => {
   const itemId = Number(payload.item_id);
   if (!Number.isInteger(itemId) || itemId <= 0) throw new Error("Debes seleccionar un equipo.");

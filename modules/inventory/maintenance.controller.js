@@ -2,7 +2,7 @@ import { createMaintenance, getMaintenanceRecords } from "./maintenance.reposito
 
 export const createMaintenanceController = async (req, res) => {
   try { return res.status(201).json(await createMaintenance(req.body, Number(req.user.sub))); }
-  catch (error) { return res.status(400).json({ message: error.message }); }
+  catch (error) { return res.status(error.statusCode || 400).json({ message: error.message }); }
 };
 
 export const getMaintenanceController = async (_req, res) => {

@@ -1,5 +1,5 @@
 import pool from "../../config/db.js";
-import { validateMaintenance } from "./maintenance.validation.js";
+import { isMaintenanceRecent, validateMaintenance } from "./maintenance.validation.js";
 
 export const createMaintenance = async (payload, technicianId) => {
   const data = validateMaintenance(payload);
@@ -8,6 +8,12 @@ export const createMaintenance = async (payload, technicianId) => {
     await client.query("BEGIN");
     const item = await client.query("SELECT id FROM inventory_items WHERE id=$1 FOR UPDATE", [data.item_id]);
     if (!item.rows[0]) throw new Error("El equipo seleccionado no existe.");
+    const previous = await client.query("SELECT performed_at, next_due_date FROM maintenance_records WHERE item_id=$1 ORDER BY performed_at DESC LIMIT 1", [data.item_id]);
+    if (isMaintenanceRecent(previous.rows[0], data.performed_at)) {
+      const duplicate = new Error("Al equipo ya se le hizo mantenimiento recientemente.");
+      duplicate.statusCode = 409;
+      throw duplicate;
+    }
     const result = await client.query(`INSERT INTO maintenance_records (item_id, technician_id, performed_at, next_due_date, tasks, notes) VALUES ($1,$2,$3,$4,$5::jsonb,$6) RETURNING *`, [data.item_id, technicianId, data.performed_at, data.next_due_date, JSON.stringify(data.tasks), data.notes]);
     await client.query("UPDATE inventory_items SET last_maintenance_at=$1,next_maintenance_at=$2,updated_at=NOW() WHERE id=$3", [data.performed_at, data.next_due_date, data.item_id]);
     await client.query("COMMIT");
