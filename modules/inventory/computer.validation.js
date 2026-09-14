@@ -1,6 +1,6 @@
 const EQUIPMENT_TYPES = ["Portátil", "Torre", "All in One"];
 const RAM_OPTIONS = ["4 GB", "8 GB", "12 GB", "16 GB", "32 GB", "64 GB"];
-const OS_OPTIONS = ["Windows 10", "Windows 11", "Linux", "macOS"];
+const OS_OPTIONS = ["WIN 10 Pro", "WIN 10 Single Lenguaje", "WIN 11 Pro", "WIN 7 Pro", "WIN 8.1 Single Lenguaje", "MacOS", "WIN 11 Single Lenguaje", "WIN 11 Pro For Workstations"];
 const SCREEN_OPTIONS = ["12 pulgadas", "13 pulgadas", "14 pulgadas", "15.6 pulgadas", "17 pulgadas", "19 pulgadas", "21.5 pulgadas", "23.8 pulgadas", "24 pulgadas"];
 const ANTIVIRUS_OPTIONS = ["Sophos", "Defender"];
 
