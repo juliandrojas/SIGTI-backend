@@ -1,4 +1,5 @@
 import pool from "../../config/db.js";
+import { validateComputerAsset } from "./computer.validation.js";
 
 const normalizePositiveInteger = (value, fieldName) => {
   const parsed = Number(value);
@@ -84,7 +85,7 @@ export const getInventoryItemById = async (id) => {
 };
 
 export const createInventoryItem = async (item) => {
-  const safeItem = validateInventoryItemPayload(item);
+  const safeItem = item?.category === "computer" ? validateComputerAsset(item) : validateInventoryItemPayload(item);
 
   const quantity = Number(safeItem.quantity ?? 0);
   const availableQuantity = Number(safeItem.available_quantity ?? quantity);
@@ -97,9 +98,11 @@ export const createInventoryItem = async (item) => {
     `
       INSERT INTO inventory_items (
         name, category, brand, reference, model, serial_number,
-        quantity, available_quantity, condition, location, status, notes
+        quantity, available_quantity, condition, location, status, notes,
+        asset_code, ip_address, area, assigned_user, equipment_type, processor, ram,
+        operating_system, hdd, ssd, nvme, screen_size, antivirus
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
       RETURNING *
     `,
     [
@@ -115,6 +118,9 @@ export const createInventoryItem = async (item) => {
       safeItem.location ?? "bodega",
       safeItem.status ?? "available",
       safeItem.notes ?? null,
+      safeItem.asset_code ?? null, safeItem.ip_address ?? null, safeItem.area ?? null, safeItem.assigned_user ?? null,
+      safeItem.equipment_type ?? null, safeItem.processor ?? null, safeItem.ram ?? null, safeItem.operating_system ?? null,
+      safeItem.hdd ?? null, safeItem.ssd ?? null, Boolean(safeItem.nvme), safeItem.screen_size ?? null, safeItem.antivirus ?? null,
     ]
   );
 
