@@ -12,6 +12,7 @@ import {
     updateInventoryLoanReturnController,
     createInventoryRequestController, getMyInventoryRequestsController, getAllInventoryRequestsController, deliverInventoryRequestController, rejectInventoryRequestController, returnInventoryRequestController,
 } from './inventory.controller.js';
+import { createMaintenanceController, getMaintenanceController } from './maintenance.controller.js';
 
 const router = Router();
 
@@ -35,5 +36,7 @@ router.get('/requests', requireAdmin, getAllInventoryRequestsController);
 router.patch('/requests/:id/deliver', requireAdmin, deliverInventoryRequestController);
 router.patch('/requests/:id/reject', requireAdmin, rejectInventoryRequestController);
 router.patch('/requests/:id/return', requireAdmin, returnInventoryRequestController);
+router.get('/maintenance', requireAdmin, getMaintenanceController);
+router.post('/maintenance', requireAdmin, createMaintenanceController);
 
 export default router;
