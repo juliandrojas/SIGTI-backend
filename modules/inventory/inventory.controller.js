@@ -8,6 +8,7 @@ import {
     updateInventoryItemService,
     updateInventoryLoanReturnService,
 } from "./inventory.service.js";
+import { createInventoryRequestService, getMyInventoryRequestsService, getAllInventoryRequestsService, deliverInventoryRequestService, rejectInventoryRequestService, returnInventoryRequestService } from "./inventory.service.js";
 
 export const getAllInventoryItemsController = async (req, res) => {
   try {
@@ -90,3 +91,10 @@ export const updateInventoryLoanReturnController = async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 };
+const requestAction = (action) => async (req,res) => { try { return res.status(200).json(await action(req)); } catch(error) { return res.status(400).json({message:error.message}); } };
+export const createInventoryRequestController = async (req,res) => { try { return res.status(201).json(await createInventoryRequestService(req.body, Number(req.user.sub))); } catch(error) { return res.status(400).json({message:error.message}); } };
+export const getMyInventoryRequestsController = async (req,res) => res.json(await getMyInventoryRequestsService(Number(req.user.sub)));
+export const getAllInventoryRequestsController = async (_req,res) => res.json(await getAllInventoryRequestsService());
+export const deliverInventoryRequestController = requestAction((req)=>deliverInventoryRequestService(req.params.id,Number(req.user.sub),Boolean(req.body?.previous_component_received)));
+export const rejectInventoryRequestController = requestAction((req)=>rejectInventoryRequestService(req.params.id,Number(req.user.sub),req.body?.reason));
+export const returnInventoryRequestController = requestAction((req)=>returnInventoryRequestService(req.params.id,Number(req.user.sub)));
