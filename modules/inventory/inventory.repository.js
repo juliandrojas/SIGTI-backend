@@ -209,7 +209,7 @@ export const getAllInventoryLoans = async () => {
   const result = await pool.query(`
     SELECT l.*, i.name AS item_name, i.brand AS item_brand, i.location AS item_location
     FROM inventory_loans l
-    INNER JOIN inventory_items i ON i.id = l.item_id
+    INNER JOIN inventory_items i ON i.id = l.item_id AND i.category <> 'computer'
     ORDER BY l.start_datetime DESC
   `);
   return result.rows;
@@ -236,6 +236,10 @@ export const createInventoryLoan = async (loan) => {
 
   if (!item) {
     throw new Error("El artículo no existe.");
+  }
+
+  if (item.category === "computer") {
+    throw new Error("Los computadores se gestionan exclusivamente desde Mantenimiento.");
   }
 
   if (item.status === "maintenance") {
