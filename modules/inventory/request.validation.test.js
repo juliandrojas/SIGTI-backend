@@ -6,7 +6,7 @@ const baseRequest = {
   item_id: 4,
   quantity: 1,
   request_type: "temporary_loan",
-  expected_return_datetime: "2026-10-01T12:00",
+  expected_return_datetime: "2099-01-05T10:00:00",
   position: "Compras",
 };
 
@@ -24,4 +24,30 @@ test("requires an expected return date for a temporary loan", () => {
 test("accepts a permanent replacement without an expected return date", () => {
   const request = { ...baseRequest, request_type: "permanent_replacement", expected_return_datetime: "" };
   assert.deepEqual(validateInventoryRequest(request), request);
+});
+
+test("rejects a return date in the past", () => {
+  assert.throws(
+    () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2020-01-01T12:00:00.000Z" }),
+    /posterior a la fecha y hora actuales/i
+  );
+});
+
+test("rejects a return date outside the support schedule", () => {
+  assert.throws(
+    () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2099-01-10T10:00:00" }),
+    /lunes a viernes/i
+  );
+  assert.throws(
+    () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2099-01-05T12:30:00" }),
+    /horario de atención/i
+  );
+});
+
+test("requires exactly one unit for a permanent replacement", () => {
+  const request = { ...baseRequest, quantity: 2, request_type: "permanent_replacement", expected_return_datetime: "" };
+  assert.throws(
+    () => validateInventoryRequest(request),
+    /una sola unidad/i
+  );
 });
