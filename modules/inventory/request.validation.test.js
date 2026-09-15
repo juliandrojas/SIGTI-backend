@@ -44,6 +44,16 @@ test("rejects a return date outside the support schedule", () => {
   );
 });
 
+test("interprets a valid same-day return using Colombia time", () => {
+  const now = new Date();
+  const future = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  while (["Sat", "Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", weekday: "short" }).format(future))) future.setTime(future.getTime() + 24 * 60 * 60 * 1000);
+  const dateParts = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(future).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+  const date = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+  const request = { ...baseRequest, expected_return_datetime: `${date}T10:00:00` };
+  assert.doesNotThrow(() => validateInventoryRequest(request));
+});
+
 test("requires exactly one unit for a permanent replacement", () => {
   const request = { ...baseRequest, quantity: 2, request_type: "permanent_replacement", expected_return_datetime: "" };
   assert.throws(
