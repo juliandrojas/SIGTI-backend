@@ -25,3 +25,11 @@ test("accepts a permanent replacement without an expected return date", () => {
   const request = { ...baseRequest, request_type: "permanent_replacement", expected_return_datetime: "" };
   assert.deepEqual(validateInventoryRequest(request), request);
 });
+
+test("requires exactly one unit for a permanent replacement", () => {
+  const request = { ...baseRequest, quantity: 2, request_type: "permanent_replacement", expected_return_datetime: "" };
+  assert.throws(
+    () => validateInventoryRequest(request),
+    /una sola unidad/i
+  );
+});
