@@ -7,6 +7,10 @@ export const validateInventoryRequest = (payload = {}) => {
   if (!types.includes(request.request_type)) throw new Error("El tipo de solicitud no es válido.");
   if (!String(request.position || "").trim()) throw new Error("El área del solicitante es obligatoria.");
   if (request.request_type === "permanent_replacement" && Number(request.quantity) !== 1) throw new Error("Los cambios definitivos deben solicitarse por una sola unidad.");
-  if (request.request_type === "temporary_loan" && !request.expected_return_datetime) throw new Error("La fecha esperada de devolución es obligatoria para un préstamo temporal.");
+  if (request.request_type === "temporary_loan") {
+    if (!request.expected_return_datetime) throw new Error("La fecha esperada de devolución es obligatoria para un préstamo temporal.");
+    const expectedReturn = new Date(request.expected_return_datetime);
+    if (Number.isNaN(expectedReturn.getTime()) || expectedReturn <= new Date()) throw new Error("La fecha de devolución debe ser posterior a la fecha y hora actuales.");
+  }
   return request;
 };
