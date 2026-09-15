@@ -7,7 +7,12 @@ const parseColombiaDateTime = (value) => {
   const parts = [Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second)];
   const wallClock = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]));
   if (Number.isNaN(wallClock.getTime()) || wallClock.getUTCFullYear() !== parts[0] || wallClock.getUTCMonth() + 1 !== parts[1] || wallClock.getUTCDate() !== parts[2] || wallClock.getUTCHours() !== parts[3] || wallClock.getUTCMinutes() !== parts[4] || wallClock.getUTCSeconds() !== parts[5]) return null;
-  return { instant: new Date(wallClock.getTime() + 5 * 60 * 60 * 1000), day: wallClock.getUTCDay(), minutes: parts[3] * 60 + parts[4] };
+  return { year: parts[0], month: parts[1], date: parts[2], day: wallClock.getUTCDay(), minutes: parts[3] * 60 + parts[4] };
+};
+
+const getColombiaToday = () => {
+  const values = new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).reduce((result, part) => ({ ...result, [part.type]: Number(part.value) }), {});
+  return Date.UTC(values.year, values.month - 1, values.day);
 };
 
 export const validateInventoryRequest = (payload = {}) => {
@@ -20,7 +25,7 @@ export const validateInventoryRequest = (payload = {}) => {
   if (request.request_type === "temporary_loan") {
     if (!request.expected_return_datetime) throw new Error("La fecha esperada de devolución es obligatoria para un préstamo temporal.");
     const expectedReturn = parseColombiaDateTime(request.expected_return_datetime);
-    if (!expectedReturn || expectedReturn.instant <= new Date()) throw new Error("La fecha de devolución debe ser posterior a la fecha y hora actuales.");
+    if (!expectedReturn || Date.UTC(expectedReturn.year, expectedReturn.month - 1, expectedReturn.date) < getColombiaToday()) throw new Error("La fecha de devolución no puede ser anterior al día de hoy.");
     if (expectedReturn.day === 0 || expectedReturn.day === 6) throw new Error("La devolución debe programarse de lunes a viernes.");
     if (expectedReturn.minutes < 480 || expectedReturn.minutes > 1020 || (expectedReturn.minutes > 720 && expectedReturn.minutes < 780)) throw new Error("La devolución debe estar dentro del horario de atención: lunes a viernes, de 08:00 a 12:00 y de 13:00 a 17:00.");
   }

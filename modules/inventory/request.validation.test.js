@@ -29,7 +29,7 @@ test("accepts a permanent replacement without an expected return date", () => {
 test("rejects a return date in the past", () => {
   assert.throws(
     () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2020-01-01T12:00:00.000Z" }),
-    /posterior a la fecha y hora actuales/i
+    /anterior al día de hoy/i
   );
 });
 
