@@ -6,7 +6,7 @@ const baseRequest = {
   item_id: 4,
   quantity: 1,
   request_type: "temporary_loan",
-  expected_return_datetime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  expected_return_datetime: "2099-01-05T10:00:00",
   position: "Compras",
 };
 
@@ -30,6 +30,17 @@ test("rejects a return date in the past", () => {
   assert.throws(
     () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2020-01-01T12:00:00.000Z" }),
     /posterior a la fecha y hora actuales/i
+  );
+});
+
+test("rejects a return date outside the support schedule", () => {
+  assert.throws(
+    () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2099-01-10T10:00:00" }),
+    /lunes a viernes/i
+  );
+  assert.throws(
+    () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2099-01-05T12:30:00" }),
+    /horario de atención/i
   );
 });
 

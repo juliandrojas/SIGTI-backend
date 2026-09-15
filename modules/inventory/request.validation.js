@@ -11,6 +11,10 @@ export const validateInventoryRequest = (payload = {}) => {
     if (!request.expected_return_datetime) throw new Error("La fecha esperada de devolución es obligatoria para un préstamo temporal.");
     const expectedReturn = new Date(request.expected_return_datetime);
     if (Number.isNaN(expectedReturn.getTime()) || expectedReturn <= new Date()) throw new Error("La fecha de devolución debe ser posterior a la fecha y hora actuales.");
+    const day = expectedReturn.getDay();
+    const minutes = expectedReturn.getHours() * 60 + expectedReturn.getMinutes();
+    if (day === 0 || day === 6) throw new Error("La devolución debe programarse de lunes a viernes.");
+    if (minutes < 480 || minutes > 1020 || (minutes > 720 && minutes < 780)) throw new Error("La devolución debe estar dentro del horario de atención: lunes a viernes, de 08:00 a 12:00 y de 13:00 a 17:00.");
   }
   return request;
 };
