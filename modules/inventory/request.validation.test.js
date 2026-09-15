@@ -29,7 +29,7 @@ test("accepts a permanent replacement without an expected return date", () => {
 test("rejects a return date in the past", () => {
   assert.throws(
     () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2020-01-01T12:00:00.000Z" }),
-    /posterior a la fecha y hora actuales/i
+    /anterior al día de hoy/i
   );
 });
 
@@ -42,6 +42,16 @@ test("rejects a return date outside the support schedule", () => {
     () => validateInventoryRequest({ ...baseRequest, expected_return_datetime: "2099-01-05T12:30:00" }),
     /horario de atención/i
   );
+});
+
+test("interprets a valid same-day return using Colombia time", () => {
+  const now = new Date();
+  const future = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  while (["Sat", "Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", weekday: "short" }).format(future))) future.setTime(future.getTime() + 24 * 60 * 60 * 1000);
+  const dateParts = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(future).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+  const date = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+  const request = { ...baseRequest, expected_return_datetime: `${date}T10:00:00` };
+  assert.doesNotThrow(() => validateInventoryRequest(request));
 });
 
 test("requires exactly one unit for a permanent replacement", () => {
