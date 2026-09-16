@@ -83,7 +83,6 @@ const renderEmail = ({ preheader, title, greeting, content, details = [], action
       </body>
     </html>`;
 };
-
 const getTransporter = () => {
   const { EMAIL_USER, EMAIL_PASS, SMTP_SERVICE = "gmail" } = process.env;
 
@@ -136,37 +135,3 @@ export const sendWelcomeEmail = async ({ email, name, username }) => {
   return true;
 };
 
-export const sendPasswordResetEmail = async ({ email, token }) => {
-  const transporter = getTransporter();
-
-  if (!transporter) {
-    throw new Error("Faltan EMAIL_USER o EMAIL_PASS para enviar recuperación.");
-  }
-
-  const frontendUrl = getFrontendUrl();
-
-  if (!frontendUrl) {
-    throw new Error("Falta FRONTEND_URL para generar el enlace de recuperación.");
-  }
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Restablece tu contraseña de PETRO-SIGTI",
-    text: [
-      "Recibimos una solicitud para restablecer tu contraseña.",
-      "",
-      `Abre este enlace para continuar: ${frontendUrl.replace(/\/$/, "")}/recovery/${token}`,
-      "",
-      "El enlace vence en 15 minutos. Si no solicitaste este cambio, ignora este mensaje.",
-    ].join("\n"),
-    html: renderEmail({
-      preheader: "Recibimos una solicitud para restablecer tu contraseña.",
-      title: "Restablece tu contraseña",
-      greeting: "Hola,",
-      content: "Recibimos una solicitud para restablecer la contraseña de tu cuenta PETRO-SIGTI. Haz clic en el botón para continuar.",
-      action: { label: "Restablecer contraseña", href: `${frontendUrl}/recovery/${token}` },
-      note: "Este enlace vence en 15 minutos. Si no solicitaste este cambio, puedes ignorar este mensaje.",
-    }),
-  });
-};

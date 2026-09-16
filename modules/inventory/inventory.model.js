@@ -25,7 +25,6 @@ export const inventoryLoanModel = {
   start_datetime: 'start_datetime',
   expected_return_datetime: 'expected_return_datetime',
   actual_return_datetime: 'actual_return_datetime',
-  pickup_signature: 'pickup_signature',
   return_signature: 'return_signature',
   status: 'status',
   notes: 'notes',

@@ -1,6 +1,3 @@
-ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS reset_token_hash TEXT,
-  ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMPTZ;
-
-CREATE INDEX IF NOT EXISTS idx_users_reset_token_hash
-  ON users (reset_token_hash);
+-- Obsoleto: la recuperación individual fue retirada porque SIGTI utiliza
+-- una contraseña institucional compartida. La limpieza se aplica en
+-- migrations/004_remove_unused_schema.sql.

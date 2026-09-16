@@ -3,8 +3,6 @@ import {
     createUserService,
     findUserForLoginService,
     getUsernameService,
-    requestPasswordResetService,
-    resetPasswordService,
 } from "./user.service.js";
 
 export const createUserController = async (req, res) => {
@@ -42,7 +40,6 @@ export const getUsernameController = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
 export const findUserForLoginController = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -71,26 +68,3 @@ export const findUserForLoginController = async (req, res) => {
   }
 };
 
-export const requestPasswordResetController = async (req, res) => {
-  try {
-    await requestPasswordResetService(req.body?.email);
-  } catch (error) {
-    console.error("No se pudo procesar la recuperación:", error.message);
-    return res.status(500).json({
-      message: "No fue posible enviar el correo de recuperación. Intenta nuevamente más tarde.",
-    });
-  }
-
-  return res.status(200).json({
-    message: "Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.",
-  });
-};
-
-export const resetPasswordController = async (req, res) => {
-  try {
-    await resetPasswordService(req.body.token, req.body.password);
-    return res.status(200).json({ message: "Contraseña actualizada correctamente" });
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
-};
