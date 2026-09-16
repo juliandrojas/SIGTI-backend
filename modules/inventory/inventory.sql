@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS inventory_loans (
   start_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
   expected_return_datetime TIMESTAMP WITHOUT TIME ZONE,
   actual_return_datetime TIMESTAMP WITHOUT TIME ZONE,
-  pickup_signature TEXT,
   return_signature TEXT,
   status VARCHAR(50) NOT NULL DEFAULT 'active',
   notes TEXT,

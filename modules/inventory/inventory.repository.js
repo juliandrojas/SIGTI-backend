@@ -266,9 +266,9 @@ export const createInventoryLoan = async (loan) => {
       `
         INSERT INTO inventory_loans (
           item_id, quantity, requested_by, position,
-          start_datetime, expected_return_datetime, pickup_signature, notes, status
+          start_datetime, expected_return_datetime, notes, status
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
         RETURNING *
       `,
       [
@@ -278,7 +278,6 @@ export const createInventoryLoan = async (loan) => {
         payload.position?.trim() ? payload.position.trim() : "Usuario Externo",
         payload.start_datetime ?? new Date(),
         payload.expected_return_datetime ?? null,
-        payload.pickup_signature ?? null,
         payload.notes ?? null,
       ]
     );

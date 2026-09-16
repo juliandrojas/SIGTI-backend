@@ -8,7 +8,6 @@ const existsUsername = async (username) => {
   );
   return result.rowCount > 0;
 };
-
 const generateUniqueUsername = async (name, firstLastName, secondLastName) => {
   const baseUsername = `${name.trim().toLowerCase()}.${firstLastName.trim().toLowerCase()}`;
   let username = baseUsername;
@@ -78,35 +77,3 @@ export const findUserForLogin = async (username) => {
   return result.rows[0];
 };
 
-export const saveResetToken = async (email, tokenHash, expiresAt) => {
-  const query = `
-    UPDATE users
-    SET reset_token_hash = $1,
-        reset_token_expires_at = $2
-    WHERE LOWER(email) = LOWER($3)
-    RETURNING id, email
-  `;
-
-  const result = await pool.query(query, [
-    tokenHash,
-    expiresAt,
-    email.trim()
-  ]);
-
-  return result.rows[0];
-};
-
-export const updatePasswordByResetToken = async (tokenHash, hashedPassword) => {
-  const query = `
-    UPDATE users
-    SET password = $1,
-        reset_token_hash = NULL,
-        reset_token_expires_at = NULL
-    WHERE reset_token_hash = $2
-      AND reset_token_expires_at > NOW()
-    RETURNING id
-  `;
-
-  const result = await pool.query(query, [hashedPassword, tokenHash]);
-  return result.rowCount > 0;
-};
