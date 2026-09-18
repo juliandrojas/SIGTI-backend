@@ -22,4 +22,4 @@ export const createMaintenance = async (payload, technicianId) => {
   } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
 };
 
-export const getMaintenanceRecords = async () => (await pool.query(`SELECT m.*, i.name AS item_name, i.serial_number, u.name AS technician_name, u.lastname AS technician_lastname FROM maintenance_records m JOIN inventory_items i ON i.id=m.item_id LEFT JOIN users u ON u.id=m.technician_id ORDER BY m.performed_at DESC, m.id DESC`)).rows;
+export const getMaintenanceRecords = async () => (await pool.query(`SELECT m.*, i.name AS item_name, i.asset_code, i.serial_number, u.name AS technician_name, u.lastname AS technician_lastname FROM maintenance_records m JOIN inventory_items i ON i.id=m.item_id LEFT JOIN users u ON u.id=m.technician_id ORDER BY m.performed_at DESC, m.id DESC`)).rows;
