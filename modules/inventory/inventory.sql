@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   available_quantity INTEGER NOT NULL DEFAULT 0,
   condition VARCHAR(50) NOT NULL DEFAULT 'good',
   location VARCHAR(120) NOT NULL DEFAULT 'bodega',
-  status VARCHAR(50) NOT NULL DEFAULT 'available',
   notes TEXT,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
@@ -34,6 +33,5 @@ CREATE TABLE IF NOT EXISTS inventory_loans (
     ON DELETE RESTRICT
 );
 
-CREATE INDEX IF NOT EXISTS idx_inventory_items_status ON inventory_items(status);
 CREATE INDEX IF NOT EXISTS idx_inventory_loans_item_id ON inventory_loans(item_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_loans_status ON inventory_loans(status);

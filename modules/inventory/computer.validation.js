@@ -41,7 +41,6 @@ export const validateComputerAsset = (payload = {}) => {
     name: `${String(payload.brand).trim()} ${String(payload.model).trim()}`,
     quantity: 1,
     available_quantity: 1,
-    status: "available",
   };
 };
 

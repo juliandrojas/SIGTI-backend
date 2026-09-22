@@ -56,13 +56,6 @@ const validateInventoryItemPayload = (item, isUpdate = false) => {
     }
   }
 
-  if (payload.status !== undefined && payload.status !== null) {
-    const allowedStatuses = ["available", "loaned", "maintenance"];
-    if (!allowedStatuses.includes(payload.status)) {
-      throw new Error("El estado del artículo no es válido.");
-    }
-  }
-
   return payload;
 };
 
@@ -98,11 +91,11 @@ export const createInventoryItem = async (item) => {
     `
       INSERT INTO inventory_items (
         name, category, brand, reference, model, serial_number,
-        quantity, available_quantity, condition, location, status, notes,
+        quantity, available_quantity, condition, location, notes,
         asset_code, ip_address, area, assigned_user, equipment_type, processor, ram,
         operating_system, hdd, ssd, nvme, screen_size, antivirus
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       RETURNING *
     `,
     [
@@ -116,7 +109,6 @@ export const createInventoryItem = async (item) => {
       availableQuantity,
       safeItem.condition ?? "good",
       safeItem.location ?? "bodega",
-      safeItem.status ?? "available",
       safeItem.notes ?? null,
       safeItem.asset_code ?? null, safeItem.ip_address ?? null, safeItem.area ?? null, safeItem.assigned_user ?? null,
       safeItem.equipment_type ?? null, safeItem.processor ?? null, safeItem.ram ?? null, safeItem.operating_system ?? null,
@@ -248,10 +240,6 @@ export const createInventoryLoan = async (loan) => {
     throw new Error("Los computadores se gestionan exclusivamente desde Mantenimiento.");
   }
 
-  if (item.status === "maintenance") {
-    throw new Error("No se puede prestar un artículo en mantenimiento.");
-  }
-
   const available = Number(item.available_quantity ?? item.quantity ?? 0);
   if (quantity > available) {
     throw new Error("La cantidad solicitada supera la disponible en inventario.");
@@ -285,7 +273,6 @@ export const createInventoryLoan = async (loan) => {
     const updated = await client.query(
       `UPDATE inventory_items
        SET available_quantity = available_quantity - $1,
-           status = CASE WHEN (available_quantity - $1) <= 0 THEN 'loaned' ELSE 'available' END,
            updated_at = NOW()
        WHERE id = $2
        RETURNING *`,
@@ -350,7 +337,6 @@ export const updateInventoryLoanReturn = async (loanId, payload = {}) => {
     const updatedItem = await client.query(
       `UPDATE inventory_items
        SET available_quantity = available_quantity + $1,
-           status = CASE WHEN (available_quantity + $1) > 0 THEN 'available' ELSE 'loaned' END,
            updated_at = NOW()
        WHERE id = $2
        RETURNING *`,

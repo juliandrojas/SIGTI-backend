@@ -10,7 +10,6 @@ export const inventoryItemModel = {
   available_quantity: 'available_quantity',
   condition: 'condition',
   location: 'location',
-  status: 'status',
   notes: 'notes',
   created_at: 'created_at',
   updated_at: 'updated_at',
