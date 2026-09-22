@@ -1,14 +1,14 @@
 import pool from "../../config/db.js";
 import { validateInventoryRequest } from "./request.validation.js";
 
-const select = `SELECT r.*, i.name AS item_name, i.available_quantity FROM inventory_requests r JOIN inventory_items i ON i.id=r.item_id AND i.category <> 'computer'`;
+const select = `SELECT r.*, i.name AS item_name, i.available_quantity FROM inventory_requests r JOIN inventory_items i ON i.id=r.item_id AND i.asset_type = 'peripheral'`;
 export const createRequest = async (payload, userId) => {
   const p = validateInventoryRequest(payload);
   const user = await pool.query("SELECT name, lastname FROM users WHERE id=$1", [userId]);
   if (!user.rows[0]) throw new Error("Usuario no encontrado.");
-  const item = await pool.query("SELECT category FROM inventory_items WHERE id=$1", [p.item_id]);
+  const item = await pool.query("SELECT asset_type FROM inventory_items WHERE id=$1", [p.item_id]);
   if (!item.rows[0]) throw new Error("El artículo seleccionado no existe.");
-  if (item.rows[0].category === "computer") throw new Error("Los computadores se gestionan exclusivamente desde Mantenimiento.");
+  if (item.rows[0].asset_type !== "peripheral") throw new Error("Los equipos se gestionan exclusivamente desde Mantenimiento.");
   const name = [user.rows[0].name, user.rows[0].lastname].filter(Boolean).join(" ");
   const result = await pool.query(`INSERT INTO inventory_requests (item_id,requester_id,requested_by,position,quantity,request_type,expected_return_datetime,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`, [p.item_id,userId,name,p.position.trim(),p.quantity,p.request_type,p.expected_return_datetime||null,p.notes||null]);
   return result.rows[0];

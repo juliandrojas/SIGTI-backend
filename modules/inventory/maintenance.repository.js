@@ -1,14 +1,15 @@
 import pool from "../../config/db.js";
 import { isMaintenanceRecent, validateMaintenance } from "./maintenance.validation.js";
+import { isComputerAssetType } from "./computer.validation.js";
 
 export const createMaintenance = async (payload, technicianId) => {
   const data = validateMaintenance(payload);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const item = await client.query("SELECT id, category FROM inventory_items WHERE id=$1 FOR UPDATE", [data.item_id]);
+    const item = await client.query("SELECT id, asset_type FROM inventory_items WHERE id=$1 FOR UPDATE", [data.item_id]);
     if (!item.rows[0]) throw new Error("El equipo seleccionado no existe.");
-    if (item.rows[0].category !== "computer") throw new Error("Solo los computadores pueden registrarse en Mantenimiento.");
+    if (!isComputerAssetType(item.rows[0].asset_type)) throw new Error("Solo los equipos pueden registrarse en Mantenimiento.");
     const previous = await client.query("SELECT performed_at, next_due_date FROM maintenance_records WHERE item_id=$1 ORDER BY performed_at DESC LIMIT 1", [data.item_id]);
     if (isMaintenanceRecent(previous.rows[0], data.performed_at)) {
       const duplicate = new Error("Al equipo ya se le hizo mantenimiento recientemente.");

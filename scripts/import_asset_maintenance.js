@@ -21,6 +21,13 @@ const ipFromFile = (value) => {
   const raw = text(value);
   return raw && raw.toUpperCase() !== "SIN IP" ? raw : null;
 };
+const assetTypeFromSource = (value) => {
+  const normalized = normalize(value);
+  if (normalized.startsWith("port")) return "laptop";
+  if (normalized === "aio" || normalized.includes("all in one")) return "all_in_one";
+  if (normalized.startsWith("torre")) return "tower";
+  throw new Error(`Tipo de equipo no reconocido en el archivo: ${text(value)}`);
+};
 const addSixMonths = (isoDate) => {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCMonth(date.getUTCMonth() + 6);
@@ -46,6 +53,7 @@ try {
 
   for (const row of importRows) {
     const assetCode = text(row["Codigo Equipo"]).toUpperCase();
+    const assetType = assetTypeFromSource(row["Tipo de Equipo"]);
     const ipAddress = ipFromFile(row.IP);
     const assignedUser = text(row.Usuario);
     const canonicalUser = userMap.get(normalize(assignedUser));
@@ -54,12 +62,12 @@ try {
     const performedAt = dateFromFile(row["Ult Mantenimiento"]) ?? today;
     const nextDueDate = addSixMonths(performedAt);
     const values = [
-      `${text(row["Marca equipo"])} ${text(row["Modelo equipo"])}`.trim(), "computer",
+      `${text(row["Marca equipo"])} ${text(row["Modelo equipo"])}`.trim(), assetType,
       text(row["Marca equipo"]) || null, null, text(row["Modelo equipo"]) || null,
       text(row["Serial equipo"]) || null, 1, 1, "good", text(row.Observaciones) || null,
       assetCode, ipAddress, text(row.Area) || null,
       canonicalUser ? `${canonicalUser.name} ${canonicalUser.lastname}` : assignedUser || null,
-      text(row["Tipo de Equipo"]) || null, text(row.Procesador) || null, text(row.RAM) || null,
+      text(row.Procesador) || null, text(row.RAM) || null,
       text(row.SO) || null, text(row.HDD) || null, text(row.SSD) || null,
       Boolean(text(row.NVME)), text(row["Tallaño Pantalla"]) || null, text(row.Antivirus) || null,
     ];
@@ -68,20 +76,20 @@ try {
     let itemId;
     if (existing.rows[0]) {
       const updated = await client.query(`UPDATE inventory_items SET
-        name=$1, category=$2, brand=$3, reference=$4, model=$5, serial_number=$6,
+        name=$1, asset_type=$2, brand=$3, reference=$4, model=$5, serial_number=$6,
         quantity=$7, available_quantity=$8, condition=$9, notes=$10, asset_code=$11,
-        ip_address=$12, area=$13, assigned_user=$14, equipment_type=$15,
-        processor=$16, ram=$17, operating_system=$18, hdd=$19, ssd=$20, nvme=$21,
-        screen_size=$22, antivirus=$23, updated_at=NOW() WHERE id=$24 RETURNING id`, [...values, existing.rows[0].id]);
+        ip_address=$12, area=$13, assigned_user=$14, processor=$15, ram=$16,
+        operating_system=$17, hdd=$18, ssd=$19, nvme=$20, screen_size=$21,
+        antivirus=$22, updated_at=NOW() WHERE id=$23 RETURNING id`, [...values, existing.rows[0].id]);
       itemId = updated.rows[0].id;
       result.updated += 1;
     } else {
       const inserted = await client.query(`INSERT INTO inventory_items (
-        name, category, brand, reference, model, serial_number, quantity, available_quantity,
-        condition, notes, asset_code, ip_address, area, assigned_user,
-        equipment_type, processor, ram, operating_system, hdd, ssd, nvme, screen_size,
+        name, asset_type, brand, reference, model, serial_number, quantity, available_quantity,
+        condition, notes, asset_code, ip_address, area, assigned_user, processor, ram,
+        operating_system, hdd, ssd, nvme, screen_size,
         antivirus
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING id`, values);
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`, values);
       itemId = inserted.rows[0].id;
       result.inserted += 1;
     }

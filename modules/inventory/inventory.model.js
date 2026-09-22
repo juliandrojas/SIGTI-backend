@@ -1,7 +1,7 @@
 export const inventoryItemModel = {
   id: 'id',
   name: 'name',
-  category: 'category',
+  asset_type: 'asset_type',
   brand: 'brand',
   reference: 'reference',
   model: 'model',

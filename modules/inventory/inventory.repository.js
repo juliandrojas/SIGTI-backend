@@ -1,5 +1,5 @@
 import pool from "../../config/db.js";
-import { validateComputerAsset } from "./computer.validation.js";
+import { isComputerAssetType, validateComputerAsset } from "./computer.validation.js";
 
 const normalizePositiveInteger = (value, fieldName) => {
   const parsed = Number(value);
@@ -25,8 +25,11 @@ const validateInventoryItemPayload = (item, isUpdate = false) => {
     }
   }
 
-  if (payload.category !== undefined && payload.category !== null) {
-    payload.category = String(payload.category).trim();
+  if (payload.asset_type !== undefined && payload.asset_type !== null) {
+    const allowedAssetTypes = ["laptop", "all_in_one", "tower", "peripheral"];
+    if (!allowedAssetTypes.includes(payload.asset_type)) {
+      throw new Error("El tipo de activo no es válido.");
+    }
   }
 
   if (payload.quantity !== undefined) {
@@ -74,7 +77,9 @@ export const getInventoryItemById = async (id) => {
 };
 
 export const createInventoryItem = async (item) => {
-  const safeItem = item?.category === "computer" ? validateComputerAsset(item) : validateInventoryItemPayload(item);
+  const safeItem = isComputerAssetType(item?.asset_type)
+    ? validateComputerAsset(item)
+    : validateInventoryItemPayload({ ...item, asset_type: item?.asset_type ?? "peripheral" });
 
   const quantity = Number(safeItem.quantity ?? 0);
   const availableQuantity = Number(safeItem.available_quantity ?? quantity);
@@ -86,17 +91,17 @@ export const createInventoryItem = async (item) => {
   const result = await pool.query(
     `
       INSERT INTO inventory_items (
-        name, category, brand, reference, model, serial_number,
+        name, asset_type, brand, reference, model, serial_number,
         quantity, available_quantity, condition, notes,
-        asset_code, ip_address, area, assigned_user, equipment_type, processor, ram,
+        asset_code, ip_address, area, assigned_user, processor, ram,
         operating_system, hdd, ssd, nvme, screen_size, antivirus
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *
     `,
     [
       safeItem.name,
-      safeItem.category ?? "component",
+      safeItem.asset_type,
       safeItem.brand ?? null,
       safeItem.reference ?? null,
       safeItem.model ?? null,
@@ -106,7 +111,7 @@ export const createInventoryItem = async (item) => {
       safeItem.condition ?? "good",
       safeItem.notes ?? null,
       safeItem.asset_code ?? null, safeItem.ip_address ?? null, safeItem.area ?? null, safeItem.assigned_user ?? null,
-      safeItem.equipment_type ?? null, safeItem.processor ?? null, safeItem.ram ?? null, safeItem.operating_system ?? null,
+      safeItem.processor ?? null, safeItem.ram ?? null, safeItem.operating_system ?? null,
       safeItem.hdd ?? null, safeItem.ssd ?? null, Boolean(safeItem.nvme), safeItem.screen_size ?? null, safeItem.antivirus ?? null,
     ]
   );
@@ -123,6 +128,8 @@ export const updateInventoryItem = async (id, item) => {
   delete safeItem.id;
   delete safeItem.created_at;
   delete safeItem.updated_at;
+  delete safeItem.category;
+  delete safeItem.equipment_type;
 
   if (Object.keys(safeItem).length === 0) {
     return await getInventoryItemById(parsedId);
@@ -202,7 +209,7 @@ export const getAllInventoryLoans = async () => {
   const result = await pool.query(`
     SELECT l.*, i.name AS item_name, i.brand AS item_brand
     FROM inventory_loans l
-    INNER JOIN inventory_items i ON i.id = l.item_id AND i.category <> 'computer'
+    INNER JOIN inventory_items i ON i.id = l.item_id AND i.asset_type = 'peripheral'
     ORDER BY l.start_datetime DESC
   `);
   return result.rows;
@@ -231,8 +238,8 @@ export const createInventoryLoan = async (loan) => {
     throw new Error("El artículo no existe.");
   }
 
-  if (item.category === "computer") {
-    throw new Error("Los computadores se gestionan exclusivamente desde Mantenimiento.");
+  if (item.asset_type !== "peripheral") {
+    throw new Error("Los equipos se gestionan exclusivamente desde Mantenimiento.");
   }
 
   const available = Number(item.available_quantity ?? item.quantity ?? 0);
