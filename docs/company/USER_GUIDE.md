@@ -24,16 +24,19 @@ En **Mis solicitudes** (`/usuario/requests/history`) puedes buscar por elemento 
 ## Sistemas: tablero e inventario
 
 - **Inicio** (`/sistemas`) resume tipos, unidades totales, disponibles y prestadas de periféricos. La sección de equipos muestra mantenimientos vencidos, próximos 30 días y al día según el último mantenimiento de cada computador.
-- **Inventario** (`/sistemas/inventory`) muestra periféricos. Permite buscar, crear, editar y eliminar artículos; la columna **Disponibles** muestra unidades disponibles, no una fracción. Antes de eliminar, comprueba que no existan solicitudes o préstamos asociados.
+- **Inventario** (`/sistemas/inventory`) muestra periféricos y el formulario **Registrar equipo**. Permite buscar, crear, editar y eliminar artículos periféricos; la columna **Disponibles** muestra unidades disponibles, no una fracción. Antes de eliminar, comprueba que no existan solicitudes o préstamos asociados.
 - **Préstamos y solicitudes** (`/sistemas/loans`) permite revisar solicitudes, entregar o rechazar y registrar la devolución de préstamos temporales. Verifica físicamente la entrega/devolución antes de confirmarla en SIGTI.
 
 ## Sistemas: equipos y mantenimiento
 
+Para registrar un equipo, ve a **Inventario** (`/sistemas/inventory`):
+
+Completa **Registrar equipo**. Indica empresa, tipo (portátil, torre o todo en uno), código `EF` seguido de 3 o 4 dígitos y los datos técnicos. SIGTI antepone `PPO`/`PPC` para Petrocasinos o `CPO`/`CPC` para Cosecharte según el tipo. No uses un código completo en el campo EF.
+
 En **Mantenimiento** (`/sistemas/maintenance`):
 
-1. Para un equipo nuevo, completa **Registrar equipo**. Indica empresa, tipo (portátil, torre o todo en uno), código `EF` seguido de 3 o 4 dígitos y los datos técnicos. SIGTI antepone `PPO`/`PPC` para Petrocasinos o `CPO`/`CPC` para Cosecharte según el tipo. No uses un código completo en el campo EF.
-2. Para registrar un mantenimiento, busca el equipo por código, nombre o serial. Selecciónalo de la lista y confirma la **fecha realizada** y las observaciones. La próxima fecha se calcula seis meses después. Las actividades obligatorias son limpieza interna y cambio de pasta térmica.
-3. En **Historial de Mantenimiento**, usa **Editar** para corregir la fecha, observaciones o dirección IP. Guardar la IP cambia el dato del **equipo**, no solo el registro histórico. Una IP vacía deja el equipo sin IP definida. La próxima fecha se vuelve a calcular al modificar la fecha realizada.
+1. Para registrar un mantenimiento, busca el equipo por código, nombre o serial. Selecciónalo de la lista y confirma la **fecha realizada** y las observaciones. La próxima fecha se calcula seis meses después. Las actividades obligatorias son limpieza interna y cambio de pasta térmica.
+2. En **Historial de Mantenimiento**, usa **Editar** para corregir la fecha, observaciones o dirección IP. Guardar la IP cambia el dato del **equipo**, no solo el registro histórico. Una IP vacía deja el equipo sin IP definida. La próxima fecha se vuelve a calcular al modificar la fecha realizada.
 
 Si SIGTI informa que el equipo tiene un mantenimiento reciente, revisa el historial antes de intentar otro registro. Para corregir un mantenimiento existente usa **Editar**, sin crear uno duplicado. Las fechas de la interfaz se muestran como `DD-MM-AAAA`.
 
