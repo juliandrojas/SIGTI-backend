@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   name VARCHAR(150) NOT NULL,
   category VARCHAR(80) NOT NULL DEFAULT 'component',
   brand VARCHAR(120),
-  reference VARCHAR(120),
   model VARCHAR(120),
   serial_number VARCHAR(120),
   quantity INTEGER NOT NULL DEFAULT 0,

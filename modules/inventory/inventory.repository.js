@@ -91,19 +91,18 @@ export const createInventoryItem = async (item) => {
   const result = await pool.query(
     `
       INSERT INTO inventory_items (
-        name, asset_type, brand, reference, model, serial_number,
+        name, asset_type, brand, model, serial_number,
         quantity, available_quantity, condition, notes,
         asset_code, ip_address, area, assigned_user, processor, ram,
         operating_system, hdd, ssd, nvme, screen_size, antivirus
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *
     `,
     [
       safeItem.name,
       safeItem.asset_type,
       safeItem.brand ?? null,
-      safeItem.reference ?? null,
       safeItem.model ?? null,
       safeItem.serial_number ?? null,
       quantity,
@@ -130,6 +129,7 @@ export const updateInventoryItem = async (id, item) => {
   delete safeItem.updated_at;
   delete safeItem.category;
   delete safeItem.equipment_type;
+  delete safeItem.reference;
 
   if (Object.keys(safeItem).length === 0) {
     return await getInventoryItemById(parsedId);

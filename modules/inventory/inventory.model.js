@@ -3,7 +3,6 @@ export const inventoryItemModel = {
   name: 'name',
   asset_type: 'asset_type',
   brand: 'brand',
-  reference: 'reference',
   model: 'model',
   serial_number: 'serial_number',
   quantity: 'quantity',
