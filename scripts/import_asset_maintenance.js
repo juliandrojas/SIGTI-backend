@@ -62,8 +62,6 @@ try {
       text(row["Tipo de Equipo"]) || null, text(row.Procesador) || null, text(row.RAM) || null,
       text(row.SO) || null, text(row.HDD) || null, text(row.SSD) || null,
       Boolean(text(row.NVME)), text(row["Tallaño Pantalla"]) || null, text(row.Antivirus) || null,
-      text(row["Codigo Pantalla"]) || null, text(row["Marca Pantalla"]) || null,
-      text(row["Modelo Pantalla"]) || null, text(row["Serial Pantalla"]) || null,
     ];
 
     const existing = await client.query("SELECT id FROM inventory_items WHERE asset_code = $1 LIMIT 1", [assetCode]);
@@ -75,8 +73,7 @@ try {
         notes=$12, asset_code=$13, ip_address=$14,
         area=$15, assigned_user=$16, equipment_type=$17, processor=$18, ram=$19,
         operating_system=$20, hdd=$21, ssd=$22, nvme=$23, screen_size=$24,
-        antivirus=$25, screen_asset_code=$26, screen_brand=$27, screen_model=$28,
-        screen_serial_number=$29, updated_at=NOW() WHERE id=$30 RETURNING id`, [...values, existing.rows[0].id]);
+        antivirus=$25, updated_at=NOW() WHERE id=$26 RETURNING id`, [...values, existing.rows[0].id]);
       itemId = updated.rows[0].id;
       result.updated += 1;
     } else {
@@ -84,8 +81,8 @@ try {
         name, category, brand, reference, model, serial_number, quantity, available_quantity,
         condition, location, status, notes, asset_code, ip_address, area, assigned_user,
         equipment_type, processor, ram, operating_system, hdd, ssd, nvme, screen_size,
-        antivirus, screen_asset_code, screen_brand, screen_model, screen_serial_number
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29) RETURNING id`, values);
+        antivirus
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) RETURNING id`, values);
       itemId = inserted.rows[0].id;
       result.inserted += 1;
     }
