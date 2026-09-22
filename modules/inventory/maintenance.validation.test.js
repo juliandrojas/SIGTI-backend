@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addMaintenancePeriod, isMaintenanceRecent, validateMaintenance } from "./maintenance.validation.js";
+import { addMaintenancePeriod, isMaintenanceRecent, validateMaintenance, validateMaintenanceEdit } from "./maintenance.validation.js";
 
 test("programa el mantenimiento seis meses después", () => {
   assert.equal(addMaintenancePeriod("2026-01-15"), "2026-07-15");
@@ -16,4 +16,17 @@ test("exige las dos tareas preventivas", () => {
 
 test("identifica un mantenimiento vigente", () => {
   assert.equal(isMaintenanceRecent({ performed_at: "2026-09-14", next_due_date: "2027-03-14" }, "2026-09-14"), true);
+});
+
+test("al editar recalcula la próxima fecha y conserva las observaciones", () => {
+  assert.deepEqual(validateMaintenanceEdit({ performed_at: "2026-09-22", notes: " Cambio de RAM " }), {
+    performed_at: "2026-09-22",
+    next_due_date: "2027-03-22",
+    notes: "Cambio de RAM",
+  });
+});
+
+test("rechaza fechas imposibles o sin formato ISO al editar", () => {
+  assert.throws(() => validateMaintenanceEdit({ performed_at: "2026-02-30" }), /fecha/);
+  assert.throws(() => validateMaintenanceEdit({ performed_at: "22-09-2026" }), /AAAA-MM-DD/);
 });

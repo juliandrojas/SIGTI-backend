@@ -12,7 +12,7 @@ import {
     updateInventoryLoanReturnController,
     createInventoryRequestController, getMyInventoryRequestsController, getAllInventoryRequestsController, deliverInventoryRequestController, rejectInventoryRequestController, returnInventoryRequestController,
 } from './inventory.controller.js';
-import { createMaintenanceController, getMaintenanceController } from './maintenance.controller.js';
+import { createMaintenanceController, getMaintenanceController, updateMaintenanceController } from './maintenance.controller.js';
 
 const router = Router();
 
@@ -38,5 +38,6 @@ router.patch('/requests/:id/reject', requireAdmin, rejectInventoryRequestControl
 router.patch('/requests/:id/return', requireAdmin, returnInventoryRequestController);
 router.get('/maintenance', requireAdmin, getMaintenanceController);
 router.post('/maintenance', requireAdmin, createMaintenanceController);
+router.patch('/maintenance/:id', requireAdmin, updateMaintenanceController);
 
 export default router;
