@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   quantity INTEGER NOT NULL DEFAULT 0,
   available_quantity INTEGER NOT NULL DEFAULT 0,
   condition VARCHAR(50) NOT NULL DEFAULT 'good',
-  location VARCHAR(120) NOT NULL DEFAULT 'bodega',
   notes TEXT,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()

@@ -29,10 +29,6 @@ const validateInventoryItemPayload = (item, isUpdate = false) => {
     payload.category = String(payload.category).trim();
   }
 
-  if (payload.location !== undefined && payload.location !== null) {
-    payload.location = String(payload.location).trim();
-  }
-
   if (payload.quantity !== undefined) {
     payload.quantity = normalizePositiveInteger(payload.quantity, "quantity");
   }
@@ -91,11 +87,11 @@ export const createInventoryItem = async (item) => {
     `
       INSERT INTO inventory_items (
         name, category, brand, reference, model, serial_number,
-        quantity, available_quantity, condition, location, notes,
+        quantity, available_quantity, condition, notes,
         asset_code, ip_address, area, assigned_user, equipment_type, processor, ram,
         operating_system, hdd, ssd, nvme, screen_size, antivirus
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *
     `,
     [
@@ -108,7 +104,6 @@ export const createInventoryItem = async (item) => {
       quantity,
       availableQuantity,
       safeItem.condition ?? "good",
-      safeItem.location ?? "bodega",
       safeItem.notes ?? null,
       safeItem.asset_code ?? null, safeItem.ip_address ?? null, safeItem.area ?? null, safeItem.assigned_user ?? null,
       safeItem.equipment_type ?? null, safeItem.processor ?? null, safeItem.ram ?? null, safeItem.operating_system ?? null,
@@ -205,7 +200,7 @@ export const deleteInventoryItem = async (id) => {
 
 export const getAllInventoryLoans = async () => {
   const result = await pool.query(`
-    SELECT l.*, i.name AS item_name, i.brand AS item_brand, i.location AS item_location
+    SELECT l.*, i.name AS item_name, i.brand AS item_brand
     FROM inventory_loans l
     INNER JOIN inventory_items i ON i.id = l.item_id AND i.category <> 'computer'
     ORDER BY l.start_datetime DESC

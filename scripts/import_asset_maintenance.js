@@ -56,8 +56,8 @@ try {
     const values = [
       `${text(row["Marca equipo"])} ${text(row["Modelo equipo"])}`.trim(), "computer",
       text(row["Marca equipo"]) || null, null, text(row["Modelo equipo"]) || null,
-      text(row["Serial equipo"]) || null, 1, 1, "good", "bodega",
-      text(row.Observaciones) || null, assetCode, ipAddress, text(row.Area) || null,
+      text(row["Serial equipo"]) || null, 1, 1, "good", text(row.Observaciones) || null,
+      assetCode, ipAddress, text(row.Area) || null,
       canonicalUser ? `${canonicalUser.name} ${canonicalUser.lastname}` : assignedUser || null,
       text(row["Tipo de Equipo"]) || null, text(row.Procesador) || null, text(row.RAM) || null,
       text(row.SO) || null, text(row.HDD) || null, text(row.SSD) || null,
@@ -69,20 +69,19 @@ try {
     if (existing.rows[0]) {
       const updated = await client.query(`UPDATE inventory_items SET
         name=$1, category=$2, brand=$3, reference=$4, model=$5, serial_number=$6,
-        quantity=$7, available_quantity=$8, condition=$9, location=$10, notes=$11,
-        asset_code=$12, ip_address=$13, area=$14, assigned_user=$15,
-        equipment_type=$16, processor=$17, ram=$18, operating_system=$19, hdd=$20,
-        ssd=$21, nvme=$22, screen_size=$23, antivirus=$24,
-        updated_at=NOW() WHERE id=$25 RETURNING id`, [...values, existing.rows[0].id]);
+        quantity=$7, available_quantity=$8, condition=$9, notes=$10, asset_code=$11,
+        ip_address=$12, area=$13, assigned_user=$14, equipment_type=$15,
+        processor=$16, ram=$17, operating_system=$18, hdd=$19, ssd=$20, nvme=$21,
+        screen_size=$22, antivirus=$23, updated_at=NOW() WHERE id=$24 RETURNING id`, [...values, existing.rows[0].id]);
       itemId = updated.rows[0].id;
       result.updated += 1;
     } else {
       const inserted = await client.query(`INSERT INTO inventory_items (
         name, category, brand, reference, model, serial_number, quantity, available_quantity,
-        condition, location, notes, asset_code, ip_address, area, assigned_user,
+        condition, notes, asset_code, ip_address, area, assigned_user,
         equipment_type, processor, ram, operating_system, hdd, ssd, nvme, screen_size,
         antivirus
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) RETURNING id`, values);
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING id`, values);
       itemId = inserted.rows[0].id;
       result.inserted += 1;
     }
