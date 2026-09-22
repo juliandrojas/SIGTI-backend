@@ -2,7 +2,7 @@
 
 ## Propósito y repositorios
 
-SIGTI gestiona inventario de TI, préstamos, autenticación y mantenimiento. El espacio de trabajo contiene tres repositorios independientes:
+SIGTI gestiona inventario de TI, préstamos, solicitudes, autenticación y mantenimiento. El espacio de trabajo contiene tres repositorios independientes. La [documentación de entrega interna](company/README.md) reúne el manual de usuario, la guía técnica y el procedimiento de migración y respaldo.
 
 | Repositorio | Responsabilidad | Remoto |
 | --- | --- | --- |
@@ -15,9 +15,9 @@ No existe un repositorio Git en la carpeta superior. Los cambios, ramas y commit
 ## Arquitectura
 
 ```text
-React/Vite (client) -- JWT/JSON --> Express (server) -- pg --> PostgreSQL/Supabase
+React/Vite (client) -- JWT/JSON --> Express (server) -- pg --> PostgreSQL
                                      |
-                                     +--> correo SMTP para recuperación de contraseña
+                                     +--> correo SMTP opcional para bienvenida de usuarios
 
 Flutter (SIGTI-app) está separado y todavía no consume la API de forma documentada.
 ```
@@ -34,8 +34,8 @@ Flutter (SIGTI-app) está separado y todavía no consume la API de forma documen
 
 | Rol | Acceso web | Responsabilidad |
 | --- | --- | --- |
-| 1 | `/sistemas` | Inventario, historial de préstamos, devoluciones y mantenimiento. |
-| 2 | `/usuario` | Crear solicitudes de préstamo. |
+| 1 | `/sistemas` | Inventario de componentes, solicitudes, préstamos, equipos y mantenimiento. |
+| 2 | `/usuario` | Crear y consultar solicitudes. |
 
 La autorización debe aplicarse tanto en la interfaz como en la API. La interfaz no sustituye a un middleware del servidor.
 
@@ -50,7 +50,7 @@ La autorización debe aplicarse tanto en la interfaz como en la API. La interfaz
 | Usuarios y autenticación | `server/modules/users/` |
 | Inventario y préstamos | `server/modules/inventory/` |
 | Roles y middleware | `server/modules/roles/`, `server/middleware/` |
-| Esquema de referencia | `BD.sql`, `server/modules/inventory/inventory.sql` |
+| Evolución del esquema | `server/modules/inventory/migrations/`; el esquema instalado se comprueba con un volcado actual de PostgreSQL |
 | Cliente móvil | `SIGTI-app/lib/` |
 
 ## Desarrollo local
@@ -64,7 +64,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-La API requiere `SUPABASE_CONNECTION` o `DATABASE_URL`, además de las variables de JWT y correo definidas en `.env.example`. Nunca se versiona `.env` ni se comparte su contenido en memorias de agentes.
+La API requiere `SUPABASE_CONNECTION` o `DATABASE_URL` y `JWT_SECRET`; las variables de correo se usan si se necesita enviar bienvenida al crear usuarios. `.env.example` no contiene una conexión de ejemplo: hay que configurarla en privado. Nunca se versiona `.env` ni se comparte su contenido en memorias de agentes. La conexión `config/db.js` solicita SSL; para un PostgreSQL propio, comprobar la compatibilidad antes del corte.
 
 ### Interfaz web
 
@@ -75,7 +75,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-`VITE_API_URL` apunta a la API. Sin esa variable, el cliente usa `http://localhost:3000` durante desarrollo.
+`VITE_API_URL` apunta a la API. Sin esa variable, el cliente usa como respaldo la URL de producción configurada en `client/src/api/axios.js`, incluso durante desarrollo local.
 
 ### Validación
 
@@ -114,12 +114,13 @@ SIGTI/
 ## Documentación que debe mantenerse
 
 - Actualiza esta guía cuando cambien arquitectura, roles, comandos, rutas API o la relación entre repositorios.
+- Mantén `docs/company/README.md` como índice y estado de preparación de la entrega; actualiza solo el manual o procedimiento afectado por cada cambio.
 - Añade una nota de decisión en `server/docs/decisions/` cuando una elección afecte a más de un repositorio.
 - Documenta contratos de endpoints en `server/docs/api/` cuando se agreguen o modifiquen rutas.
 - Si se crea un repositorio de documentación compartida en el futuro, muéstralo como fuente canónica y reemplaza duplicaciones locales por enlaces.
 
 ## Estado conocido
 
-- El cliente y el servidor son repositorios distintos, con despliegue configurado para Vercel.
+- El cliente y el servidor son repositorios distintos, con despliegue configurado para Vercel. La futura base propia en servidor sigue pendiente de migración y verificación.
 - El cliente móvil Flutter existe, pero su README aún es el generado por Flutter y no hay una integración API verificada.
 - La terminal actual no tiene disponible el ejecutable `ecc`; por eso todavía no se ha inicializado ni validado el Memory Vault desde línea de comandos.

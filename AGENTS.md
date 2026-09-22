@@ -1,6 +1,6 @@
 # Instrucciones para agentes: SIGTI Backend
 
-Lee primero `docs/PROJECT_GUIDE.md`. Este repositorio implementa la API Express y la autorización.
+Lee primero `docs/PROJECT_GUIDE.md`. Para cambios de entrega u operación, consulta también `docs/company/README.md` y el procedimiento específico vinculado allí. Este repositorio implementa la API Express y la autorización.
 
 - Conserva el patrón `routes -> controller -> service -> repository`.
 - Protege toda operación sensible en el servidor; no confíes en restricciones de la interfaz.
