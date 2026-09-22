@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 const toDate = (value) => {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error("La fecha de mantenimiento debe tener el formato AAAA-MM-DD.");
@@ -41,9 +43,20 @@ export const validateMaintenanceEdit = (payload = {}) => {
   if (payload.notes != null && typeof payload.notes !== "string") {
     throw new Error("Las observaciones deben ser texto.");
   }
+  if (payload.ip_address !== undefined && typeof payload.ip_address !== "string") {
+    throw new Error("La dirección IP debe ser texto.");
+  }
+  const ipAddress = payload.ip_address?.trim();
+  if (ipAddress && ipAddress.length > 80) {
+    throw new Error("La dirección IP no puede superar 80 caracteres.");
+  }
+  if (ipAddress && !isIP(ipAddress)) {
+    throw new Error("La dirección IP no es válida.");
+  }
   return {
     performed_at: performedAt,
     next_due_date: nextDueDate,
     notes: payload.notes?.trim() || null,
+    ...(payload.ip_address !== undefined ? { ip_address: ipAddress || null } : {}),
   };
 };

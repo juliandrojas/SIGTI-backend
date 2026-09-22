@@ -26,6 +26,13 @@ test("al editar recalcula la próxima fecha y conserva las observaciones", () =>
   });
 });
 
+test("al editar permite actualizar o dejar sin definir la IP del equipo", () => {
+  assert.equal(validateMaintenanceEdit({ performed_at: "2026-09-22", ip_address: " 172.16.1.10 " }).ip_address, "172.16.1.10");
+  assert.equal(validateMaintenanceEdit({ performed_at: "2026-09-22", ip_address: " " }).ip_address, null);
+  assert.throws(() => validateMaintenanceEdit({ performed_at: "2026-09-22", ip_address: 123 }), /dirección IP/);
+  assert.throws(() => validateMaintenanceEdit({ performed_at: "2026-09-22", ip_address: "999.1.1.1" }), /dirección IP/);
+});
+
 test("rechaza fechas imposibles o sin formato ISO al editar", () => {
   assert.throws(() => validateMaintenanceEdit({ performed_at: "2026-02-30" }), /fecha/);
   assert.throws(() => validateMaintenanceEdit({ performed_at: "22-09-2026" }), /AAAA-MM-DD/);

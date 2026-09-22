@@ -23,23 +23,40 @@ export const createMaintenance = async (payload, technicianId) => {
   } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
 };
 
-export const getMaintenanceRecords = async () => (await pool.query(`SELECT m.*, i.name AS item_name, i.asset_code, i.serial_number, u.name AS technician_name, u.lastname AS technician_lastname FROM maintenance_records m JOIN inventory_items i ON i.id=m.item_id LEFT JOIN users u ON u.id=m.technician_id ORDER BY m.performed_at DESC, m.id DESC`)).rows;
+export const getMaintenanceRecords = async () => (await pool.query(`SELECT m.*, i.name AS item_name, i.asset_code, i.serial_number, i.ip_address, u.name AS technician_name, u.lastname AS technician_lastname FROM maintenance_records m JOIN inventory_items i ON i.id=m.item_id LEFT JOIN users u ON u.id=m.technician_id ORDER BY m.performed_at DESC, m.id DESC`)).rows;
 
 export const updateMaintenance = async (recordId, payload) => {
   const id = Number(recordId);
   if (!Number.isInteger(id) || id <= 0) throw new Error("El identificador del mantenimiento no es válido.");
   const data = validateMaintenanceEdit(payload);
-  const result = await pool.query(
-    `UPDATE maintenance_records
-     SET performed_at=$2, next_due_date=$3, notes=$4
-     WHERE id=$1
-     RETURNING *`,
-    [id, data.performed_at, data.next_due_date, data.notes],
-  );
-  if (!result.rows[0]) {
-    const error = new Error("El mantenimiento no existe.");
-    error.statusCode = 404;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query("SELECT item_id FROM maintenance_records WHERE id=$1 FOR UPDATE", [id]);
+    if (!current.rows[0]) {
+      const error = new Error("El mantenimiento no existe.");
+      error.statusCode = 404;
+      throw error;
+    }
+    const result = await client.query(
+      `UPDATE maintenance_records
+       SET performed_at=$2, next_due_date=$3, notes=$4
+       WHERE id=$1
+       RETURNING *`,
+      [id, data.performed_at, data.next_due_date, data.notes],
+    );
+    if (Object.hasOwn(data, "ip_address")) {
+      await client.query(
+        "UPDATE inventory_items SET ip_address=$1, updated_at=NOW() WHERE id=$2",
+        [data.ip_address, current.rows[0].item_id],
+      );
+    }
+    await client.query("COMMIT");
+    return { ...result.rows[0], ...(Object.hasOwn(data, "ip_address") ? { ip_address: data.ip_address } : {}) };
+  } catch (error) {
+    await client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
   }
-  return result.rows[0];
 };
